@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Protect the Groq free-tier quota",
+      "description": "Blocks shell commands that would burn the daily LLM budget: full eval runs and tests forced into live LLM mode.",
+      "trigger": "PreToolUse",
+      "matcher": "shell",
+      "action": {
+        "type": "command",
+        "command": "python3 .kiro/scripts/guard_quota.py"
+      },
+      "timeout": 10
+    }
+  ]
+}

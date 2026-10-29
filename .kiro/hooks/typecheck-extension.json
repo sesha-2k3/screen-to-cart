@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Type-check extension on save",
+      "description": "Runs tsc --noEmit whenever the agent saves a TypeScript file in the extension. Type errors are sent back to the agent.",
+      "trigger": "PostFileSave",
+      "matcher": "extension/.*\\.(ts|tsx)$",
+      "action": {
+        "type": "command",
+        "command": "cd extension && pnpm exec tsc --noEmit"
+      },
+      "timeout": 120
+    }
+  ]
+}

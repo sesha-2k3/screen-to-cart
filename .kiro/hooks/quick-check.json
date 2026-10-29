@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Quick check after each agent turn",
+      "description": "After the agent finishes a turn, runs ruff, the offline test suite, and the extension type check. Failures are reported back to the agent. Disable with enabled:false if it slows you down early on.",
+      "trigger": "Stop",
+      "action": {
+        "type": "command",
+        "command": "bash .kiro/scripts/quick_check.sh"
+      },
+      "timeout": 240,
+      "enabled": true
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Sync extension types when schemas change",
+      "description": "When backend/app/schemas.py changes, asks the agent to regenerate the extension's API types and fix any callers. Uses credits (agent action).",
+      "trigger": "PostFileSave",
+      "matcher": "backend/app/schemas\\.py$",
+      "action": {
+        "type": "agent",
+        "prompt": "backend/app/schemas.py just changed. If the backend is running on localhost:8000, regenerate the extension types with `cd extension && pnpm openapi-typescript http://localhost:8000/openapi.json -o lib/api-types.ts`; if it isn't running, tell me to start it with `cd backend && uv run uvicorn app.main:app` and stop. Then update any extension code that uses changed types, and run `pnpm exec tsc --noEmit`. Do not hand-edit lib/api-types.ts."
+      }
+    }
+  ]
+}

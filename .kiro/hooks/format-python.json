@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Format and lint Python on save",
+      "description": "Runs ruff format and ruff check --fix on the backend whenever the agent saves a Python file. Failures are sent back to the agent.",
+      "trigger": "PostFileSave",
+      "matcher": "backend/.*\\.py$",
+      "action": {
+        "type": "command",
+        "command": "cd backend && uv run ruff format --quiet . && uv run ruff check --fix --quiet ."
+      },
+      "timeout": 60
+    }
+  ]
+}
