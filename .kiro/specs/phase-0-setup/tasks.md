@@ -125,7 +125,7 @@ Rules that apply to every task:
     - Unsupported provider and malformed spec cases are covered by 4.3 and 4.4; together 4.2–4.6 cover every case in Req 13.4
     - _Requirements: 6.4, 6.11, 13.4, 13.8_
 
-- [ ] 5. Checkpoint: backend checks pass
+- [x] 5. Checkpoint: backend checks pass
   - In `backend/`: `uv run pytest -q`, `uv run ruff check .`, `uv run mypy app`. Fix anything that fails.
 
 - [ ] 6. Health endpoint with Langfuse tracing
