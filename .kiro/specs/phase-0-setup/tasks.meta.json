@@ -11,6 +11,10 @@
     "3.5 Write property test for CORS origin parsing in `tests/test_config.py`": {
       "status": "passed",
       "lastRunTimestamp": 1793333675187
+    },
+    "4.4 Write property test for unknown roles and providers in `tests/test_llm_factory.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1793370723961
     }
   },
   "executionHistory": {
@@ -165,6 +169,85 @@
         "executionId": "fd14c66f-e7a6-4116-bb3d-ef386a14db5c",
         "chatSessionId": "sess_9a5083c9-4044-4069-96fc-1d18197ccbe2",
         "timestamp": 1793334680910
+      }
+    ],
+    "4.1 Implement `backend/app/llm/factory.py` and re-export from `backend/app/llm/__init__.py`": [
+      {
+        "executionId": "47391fb4-79f4-48e9-aed3-503f3a3c1502",
+        "chatSessionId": "sess_0dd3373d-3ef2-44a4-b9cb-ab60a52341fe",
+        "timestamp": 1793334902445
+      },
+      {
+        "executionId": "47391fb4-79f4-48e9-aed3-503f3a3c1502",
+        "chatSessionId": "sess_0dd3373d-3ef2-44a4-b9cb-ab60a52341fe",
+        "timestamp": 1793335483638
+      }
+    ],
+    "4.2 Write property test for spec parsing in `tests/test_llm_factory.py`": [
+      {
+        "executionId": "66557b61-8f23-4c0a-a5c1-23df5c593ebd",
+        "chatSessionId": "sess_2412634d-b575-47ce-9964-b633440009e1",
+        "timestamp": 1793335504649
+      },
+      {
+        "executionId": "66557b61-8f23-4c0a-a5c1-23df5c593ebd",
+        "chatSessionId": "sess_2412634d-b575-47ce-9964-b633440009e1",
+        "timestamp": 1793335608737
+      }
+    ],
+    "4.3 Write property test for malformed specs in `tests/test_llm_factory.py`": [
+      {
+        "executionId": "53dae02b-f59c-4a2e-a838-d19287757275",
+        "chatSessionId": "sess_6b1b876b-e557-4b2a-8242-4bd8660dcc2e",
+        "timestamp": 1793370525243
+      },
+      {
+        "executionId": "53dae02b-f59c-4a2e-a838-d19287757275",
+        "chatSessionId": "sess_6b1b876b-e557-4b2a-8242-4bd8660dcc2e",
+        "timestamp": 1793370600401
+      }
+    ],
+    "4.4 Write property test for unknown roles and providers in `tests/test_llm_factory.py`": [
+      {
+        "executionId": "57800f50-de85-47d5-9903-6d2b64aa0927",
+        "chatSessionId": "sess_0e4eb4c5-5252-4f1d-b553-da473f4c19ba",
+        "timestamp": 1793370632942
+      },
+      {
+        "executionId": "57800f50-de85-47d5-9903-6d2b64aa0927",
+        "chatSessionId": "sess_0e4eb4c5-5252-4f1d-b553-da473f4c19ba",
+        "timestamp": 1793370733956
+      }
+    ],
+    "4.5 Write property test for Groq construction in `tests/test_llm_factory.py`": [
+      {
+        "executionId": "5b9af196-5d91-42e7-865c-0dfad44175c0",
+        "chatSessionId": "sess_ab07f69c-0e94-4e66-9a9c-5540c94cd586",
+        "timestamp": 1793370760478
+      },
+      {
+        "executionId": "5b9af196-5d91-42e7-865c-0dfad44175c0",
+        "chatSessionId": "sess_ab07f69c-0e94-4e66-9a9c-5540c94cd586",
+        "timestamp": 1793370818180
+      }
+    ],
+    "4.6 Write unit tests for factory error cases in `tests/test_llm_factory.py`": [
+      {
+        "executionId": "3d1a757e-eb0d-4931-9b63-585a3e2d492b",
+        "chatSessionId": "sess_6b31dbf0-95b8-48c3-9393-99d05e5277c1",
+        "timestamp": 1793370845087
+      },
+      {
+        "executionId": "3d1a757e-eb0d-4931-9b63-585a3e2d492b",
+        "chatSessionId": "sess_6b31dbf0-95b8-48c3-9393-99d05e5277c1",
+        "timestamp": 1793370926161
+      }
+    ],
+    "4. LLM provider factory": [
+      {
+        "executionId": "3d1a757e-eb0d-4931-9b63-585a3e2d492b",
+        "chatSessionId": "sess_6b31dbf0-95b8-48c3-9393-99d05e5277c1",
+        "timestamp": 1793370926194
       }
     ]
   }

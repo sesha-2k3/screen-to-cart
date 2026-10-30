@@ -82,8 +82,8 @@ Rules that apply to every task:
     - Never reads the real `.env`
     - _Requirements: 5.8, 5.9, 13.7_
 
-- [ ] 4. LLM provider factory
-  - [ ] 4.1 Implement `backend/app/llm/factory.py` and re-export from `backend/app/llm/__init__.py`
+- [x] 4. LLM provider factory
+  - [x] 4.1 Implement `backend/app/llm/factory.py` and re-export from `backend/app/llm/__init__.py`
     - `Role(StrEnum)` with the four roles; `LlmConfigError(ValueError)`; `ProviderNotInstalledError(LlmConfigError)`, a documented subclass (non-empty docstring)
     - `parse_model_spec(spec, role)` using `str.partition(":")` and stripping both parts; malformed specs raise `LlmConfigError` naming the role and the spec
     - `get_llm(role, settings=None)`: coerce role (error names the value and lists all roles), read `settings.model_spec_for(role)` (unset → error naming the role and its env var), parse, dispatch to `_BUILDERS` (unknown provider → error naming provider, role and supported providers)
@@ -92,27 +92,27 @@ Rules that apply to every task:
     - Ignore `LLM_MODE` in Phase 0; no model-name literals anywhere in the module; secrets never appear in error messages
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 6.10, 6.11_
 
-  - [ ]* 4.2 Write property test for spec parsing in `tests/test_llm_factory.py`
+  - [x] 4.2 Write property test for spec parsing in `tests/test_llm_factory.py`
     - **Property 1: Model spec parse round trip**
     - Generator: provider from `[a-z0-9_-]{1,12}`, model from printable chars including `/`, `:`, `.`, `-`, across every Role
     - **Validates: Requirements 6.2**
 
-  - [ ]* 4.3 Write property test for malformed specs in `tests/test_llm_factory.py`
+  - [x] 4.3 Write property test for malformed specs in `tests/test_llm_factory.py`
     - **Property 2: Malformed model specs are rejected**
     - Generator: strings without `:`, `":x"`, `"x:"`, `"  :  "`, random whitespace around the separator
     - **Validates: Requirements 6.7**
 
-  - [ ]* 4.4 Write property test for unknown roles and providers in `tests/test_llm_factory.py`
+  - [x] 4.4 Write property test for unknown roles and providers in `tests/test_llm_factory.py`
     - **Property 3: Unknown roles and providers produce descriptive errors**
     - Generator: random non-role strings; random provider names excluding `groq` and `anthropic`
     - **Validates: Requirements 6.5, 6.6**
 
-  - [ ]* 4.5 Write property test for Groq construction in `tests/test_llm_factory.py`
+  - [x] 4.5 Write property test for Groq construction in `tests/test_llm_factory.py`
     - **Property 4: Groq specs build an offline ChatGroq for the configured role**
     - Each Role × random model names with a dummy `GROQ_API_KEY`; assert `type(result) is ChatGroq` and the model name and key on it; the socket guard proves no connection is opened
     - **Validates: Requirements 6.1, 6.3, 6.9, 6.10**
 
-  - [ ]* 4.6 Write unit tests for factory error cases in `tests/test_llm_factory.py`
+  - [x] 4.6 Write unit tests for factory error cases in `tests/test_llm_factory.py`
     - `anthropic:<model>` with `sys.modules["langchain_anthropic"] = None` raises `ProviderNotInstalledError` (asserted with `pytest.raises(ProviderNotInstalledError)`) mentioning `uv add langchain-anthropic`, and the same call also satisfies `pytest.raises(LlmConfigError)`
     - `issubclass(ProviderNotInstalledError, LlmConfigError)` and `ProviderNotInstalledError.__doc__` is non-empty
     - `groq` spec with no `GROQ_API_KEY` raises `LlmConfigError` naming the variable
