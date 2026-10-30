@@ -261,6 +261,61 @@
         "chatSessionId": "sess_424432a2-d1d2-4d2c-8a29-715faefbf8a0",
         "timestamp": 1793394666683
       }
+    ],
+    "6.1 Add `HealthResponse` to `backend/app/schemas.py`": [
+      {
+        "executionId": "6f9aeff1-c059-459b-8883-2a458bb8b8a7",
+        "chatSessionId": "sess_23177e10-070f-4cca-9d6b-8ea47f57d5d8",
+        "timestamp": 1793394929264
+      },
+      {
+        "executionId": "6f9aeff1-c059-459b-8883-2a458bb8b8a7",
+        "chatSessionId": "sess_23177e10-070f-4cca-9d6b-8ea47f57d5d8",
+        "timestamp": 1793399629657
+      }
+    ],
+    "6.2 Implement `backend/app/observability.py`": [
+      {
+        "executionId": "6f9aeff1-c059-459b-8883-2a458bb8b8a7",
+        "chatSessionId": "sess_23177e10-070f-4cca-9d6b-8ea47f57d5d8",
+        "timestamp": 1793399632768
+      },
+      {
+        "executionId": "6f9aeff1-c059-459b-8883-2a458bb8b8a7",
+        "chatSessionId": "sess_23177e10-070f-4cca-9d6b-8ea47f57d5d8",
+        "timestamp": 1793399676569
+      }
+    ],
+    "6.3 Implement `backend/app/main.py`": [
+      {
+        "executionId": "6f9aeff1-c059-459b-8883-2a458bb8b8a7",
+        "chatSessionId": "sess_23177e10-070f-4cca-9d6b-8ea47f57d5d8",
+        "timestamp": 1793399684522
+      },
+      {
+        "executionId": "6f9aeff1-c059-459b-8883-2a458bb8b8a7",
+        "chatSessionId": "sess_23177e10-070f-4cca-9d6b-8ea47f57d5d8",
+        "timestamp": 1793400139207
+      }
+    ],
+    "6.4 Write `backend/tests/test_health.py`": [
+      {
+        "executionId": "6f9aeff1-c059-459b-8883-2a458bb8b8a7",
+        "chatSessionId": "sess_23177e10-070f-4cca-9d6b-8ea47f57d5d8",
+        "timestamp": 1793400141751
+      },
+      {
+        "executionId": "6f9aeff1-c059-459b-8883-2a458bb8b8a7",
+        "chatSessionId": "sess_23177e10-070f-4cca-9d6b-8ea47f57d5d8",
+        "timestamp": 1793400166725
+      }
+    ],
+    "6. Health endpoint with Langfuse tracing": [
+      {
+        "executionId": "6f9aeff1-c059-459b-8883-2a458bb8b8a7",
+        "chatSessionId": "sess_23177e10-070f-4cca-9d6b-8ea47f57d5d8",
+        "timestamp": 1793400166772
+      }
     ]
   }
 }

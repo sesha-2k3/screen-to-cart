@@ -128,12 +128,12 @@ Rules that apply to every task:
 - [x] 5. Checkpoint: backend checks pass
   - In `backend/`: `uv run pytest -q`, `uv run ruff check .`, `uv run mypy app`. Fix anything that fails.
 
-- [ ] 6. Health endpoint with Langfuse tracing
-  - [ ] 6.1 Add `HealthResponse` to `backend/app/schemas.py`
+- [x] 6. Health endpoint with Langfuse tracing
+  - [x] 6.1 Add `HealthResponse` to `backend/app/schemas.py`
     - `HealthResponse(BaseModel)` with `status: Literal["ok"]`
     - _Requirements: 8.2, 8.3_
 
-  - [ ] 6.2 Implement `backend/app/observability.py`
+  - [x] 6.2 Implement `backend/app/observability.py`
     - `init_langfuse(settings)`: build `Langfuse(...)` from Settings, with `tracing_enabled=False` when either key is missing. Check the installed SDK for the base URL keyword (`base_url`, older alias `host`)
     - `shutdown_langfuse()`: `get_client().shutdown()`, logging instead of raising on failure
     - `new_callback_handler()`: return a new `CallbackHandler` on every call
@@ -141,14 +141,14 @@ Rules that apply to every task:
     - Re-export `observe`
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.8, 9.9_
 
-  - [ ] 6.3 Implement `backend/app/main.py`
+  - [x] 6.3 Implement `backend/app/main.py`
     - `create_app(settings=None)` with a `lifespan` that calls `init_langfuse(settings)` on startup and `shutdown_langfuse()` on shutdown
     - Title "Screen to Cart API"; `CORSMiddleware` with `settings.cors_allowed_origins`, methods `GET`/`POST`, `allow_credentials=False`
     - `GET /health` with `response_model=HealthResponse`, running inside `trace_attributes("health")` and an `@observe(name="health")` function. No LLM, retailer or DB calls
     - Module-level `app = create_app()`
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 9.6, 9.7, 9.8, 9.9_
 
-  - [ ] 6.4 Write `backend/tests/test_health.py`
+  - [x] 6.4 Write `backend/tests/test_health.py`
     - With Langfuse disabled, `GET /health` returns 200 and `{"status": "ok"}`. Use `with TestClient(create_app(settings))` so the lifespan runs with test settings
     - `/openapi.json` contains `HealthResponse`
     - _Requirements: 8.2, 8.3, 13.5_
