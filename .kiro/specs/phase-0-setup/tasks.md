@@ -43,8 +43,8 @@ Rules that apply to every task:
     - Run `uv run python -c "import fastapi, langgraph, langchain_groq, langfuse, torch"` to confirm the environment resolves
     - _Requirements: 8.1_
 
-- [ ] 3. Settings
-  - [ ] 3.1 Implement `backend/app/config.py`
+- [x] 3. Settings
+  - [x] 3.1 Implement `backend/app/config.py`
     - `Settings(BaseSettings)` reading the repo-root `.env` path (missing file ignored) with `extra="ignore"`, fields exactly as in the design's Settings section; secrets as `SecretStr | None`; no model-name or secret defaults
     - Shared `mode="before"` validator turning `""` into `None` for optional `str`/`SecretStr` fields
     - `llm_mode: Literal["live", "record", "replay"] = "live"`
@@ -54,7 +54,7 @@ Rules that apply to every task:
     - Keep the pydantic-settings default source order (environment over dotenv, merged per field); do not define `settings_customise_sources`
     - _Requirements: 4.6, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 8.5_
 
-  - [ ] 3.2 Write `backend/tests/conftest.py` with the test isolation fixtures
+  - [x] 3.2 Write `backend/tests/conftest.py` with the test isolation fixtures
     - At module level (before any test module imports `app.main`), set `Settings.model_config["env_file"] = None` so the import-time `app = create_app()` and every `get_settings()` call never open `.env`
     - Autouse fixture that monkeypatches `socket.socket.connect` (and `connect_ex`) to raise unless the address is loopback, so any outbound call fails the test
     - Autouse fixture that `monkeypatch.delenv(..., raising=False)` every Settings variable (all fields, upper-case) and calls `get_settings.cache_clear()` before and after each test

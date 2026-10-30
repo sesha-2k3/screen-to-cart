@@ -74,6 +74,37 @@
         "chatSessionId": "sess_10ceb5f8-bb17-4144-a6c2-63ec24e598a4",
         "timestamp": 1793331419134
       }
+    ],
+    "3.1 Implement `backend/app/config.py`": [
+      {
+        "executionId": "67b816c0-984a-4927-bd04-8ebf16c18a29",
+        "chatSessionId": "sess_521deb64-a077-40ee-b455-0f09650baf54",
+        "timestamp": 1793331636299
+      },
+      {
+        "executionId": "67b816c0-984a-4927-bd04-8ebf16c18a29",
+        "chatSessionId": "sess_521deb64-a077-40ee-b455-0f09650baf54",
+        "timestamp": 1793331817508
+      }
+    ],
+    "3.2 Write `backend/tests/conftest.py` with the test isolation fixtures": [
+      {
+        "executionId": "67b816c0-984a-4927-bd04-8ebf16c18a29",
+        "chatSessionId": "sess_521deb64-a077-40ee-b455-0f09650baf54",
+        "timestamp": 1793331820313
+      },
+      {
+        "executionId": "67b816c0-984a-4927-bd04-8ebf16c18a29",
+        "chatSessionId": "sess_521deb64-a077-40ee-b455-0f09650baf54",
+        "timestamp": 1793331900900
+      }
+    ],
+    "3. Settings": [
+      {
+        "executionId": "67b816c0-984a-4927-bd04-8ebf16c18a29",
+        "chatSessionId": "sess_521deb64-a077-40ee-b455-0f09650baf54",
+        "timestamp": 1793331900937
+      }
     ]
   }
 }
