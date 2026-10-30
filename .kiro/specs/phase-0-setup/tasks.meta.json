@@ -1,5 +1,18 @@
 {
-  "pbtResults": {},
+  "pbtResults": {
+    "3.3 Write property test for the sponsorship fallback in `tests/test_config.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1793333320231
+    },
+    "3.4 Write property test for `LLM_MODE` validation in `tests/test_config.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1793333506392
+    },
+    "3.5 Write property test for CORS origin parsing in `tests/test_config.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1793333675187
+    }
+  },
   "executionHistory": {
     "1.1 Write `.gitignore` and root `.env.example`": [
       {
@@ -104,6 +117,54 @@
         "executionId": "67b816c0-984a-4927-bd04-8ebf16c18a29",
         "chatSessionId": "sess_521deb64-a077-40ee-b455-0f09650baf54",
         "timestamp": 1793331900937
+      }
+    ],
+    "3.3 Write property test for the sponsorship fallback in `tests/test_config.py`": [
+      {
+        "executionId": "6c96c5d4-3e6c-46c1-b5d3-7a79566a36ce",
+        "chatSessionId": "sess_39d90fdb-409c-4da1-b0cd-23c9718ec854",
+        "timestamp": 1793333069842
+      },
+      {
+        "executionId": "6c96c5d4-3e6c-46c1-b5d3-7a79566a36ce",
+        "chatSessionId": "sess_39d90fdb-409c-4da1-b0cd-23c9718ec854",
+        "timestamp": 1793333330748
+      }
+    ],
+    "3.4 Write property test for `LLM_MODE` validation in `tests/test_config.py`": [
+      {
+        "executionId": "9024e7e4-410c-48a0-9343-4c986936be84",
+        "chatSessionId": "sess_95b1654b-0f08-4ecf-bbd8-c92ba8c525cd",
+        "timestamp": 1793333447722
+      },
+      {
+        "executionId": "9024e7e4-410c-48a0-9343-4c986936be84",
+        "chatSessionId": "sess_95b1654b-0f08-4ecf-bbd8-c92ba8c525cd",
+        "timestamp": 1793333517121
+      }
+    ],
+    "3.5 Write property test for CORS origin parsing in `tests/test_config.py`": [
+      {
+        "executionId": "b1bcb155-aa10-492f-bb6c-302ff08d736f",
+        "chatSessionId": "sess_ec5cd553-7d18-43d6-a1d9-ce04bd8bd0f2",
+        "timestamp": 1793333538263
+      },
+      {
+        "executionId": "b1bcb155-aa10-492f-bb6c-302ff08d736f",
+        "chatSessionId": "sess_ec5cd553-7d18-43d6-a1d9-ce04bd8bd0f2",
+        "timestamp": 1793333683958
+      }
+    ],
+    "3.6 Write unit test for Settings source precedence in `tests/test_config.py`": [
+      {
+        "executionId": "fd14c66f-e7a6-4116-bb3d-ef386a14db5c",
+        "chatSessionId": "sess_9a5083c9-4044-4069-96fc-1d18197ccbe2",
+        "timestamp": 1793334645477
+      },
+      {
+        "executionId": "fd14c66f-e7a6-4116-bb3d-ef386a14db5c",
+        "chatSessionId": "sess_9a5083c9-4044-4069-96fc-1d18197ccbe2",
+        "timestamp": 1793334680910
       }
     ]
   }

@@ -61,22 +61,22 @@ Rules that apply to every task:
     - `make_settings(**values)` fixture returning `Settings(_env_file=None, **values)`; nothing opens `.env`
     - _Requirements: 13.1, 13.2, 13.7_
 
-  - [ ]* 3.3 Write property test for the sponsorship fallback in `tests/test_config.py`
+  - [x] 3.3 Write property test for the sponsorship fallback in `tests/test_config.py`
     - **Property 5: Sponsorship falls back to the refine model**
     - Generator: `s` from `None`, `""`, whitespace-only strings and random `provider:model` specs
     - **Validates: Requirements 5.2, 5.3, 13.3**
 
-  - [ ]* 3.4 Write property test for `LLM_MODE` validation in `tests/test_config.py`
+  - [x] 3.4 Write property test for `LLM_MODE` validation in `tests/test_config.py`
     - **Property 6: LLM_MODE accepts exactly three values**
     - Generator: `live`, `record`, `replay` plus random strings, `LIVE`, `" live"`, `""`; invalid values raise `ValidationError` with `llm_mode` in the error locations
     - **Validates: Requirements 5.4, 5.5, 13.3**
 
-  - [ ]* 3.5 Write property test for CORS origin parsing in `tests/test_config.py`
+  - [x] 3.5 Write property test for CORS origin parsing in `tests/test_config.py`
     - **Property 8: CORS origin list parse round trip**
     - Generator: lists of 0–5 `chrome-extension://[a-p]{32}` and `http://localhost:<port>` origins, joined with `,` with optional spaces; empty and whitespace-only values give `[]`
     - **Validates: Requirements 8.5**
 
-  - [ ]* 3.6 Write unit test for Settings source precedence in `tests/test_config.py`
+  - [x] 3.6 Write unit test for Settings source precedence in `tests/test_config.py`
     - Write a test dotenv file under `tmp_path` (e.g. `REFINE_MODEL=groq:from-file`, `DISAMBIGUATE_MODEL=groq:file-only`); `monkeypatch.setenv` `REFINE_MODEL=groq:from-env` and `IDENTIFY_VISION_MODEL=groq:env-only`; build `Settings(_env_file=tmp_path / "test.env")`
     - Assert the env value wins for `refine_model`, and that the env-only and file-only values both load into the same instance
     - Never reads the real `.env`
