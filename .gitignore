@@ -1,0 +1,18 @@
+# Secrets: never commit real env files, only the templates
+.env
+!.env.example
+extension/.env
+extension/.env.*
+!extension/.env.example
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / extension
+node_modules/
+extension/.output/
+extension/.wxt/
