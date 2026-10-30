@@ -2,14 +2,19 @@
 
 ## Overview
 
-Build the Phase 0 skeleton in the order of build plan sections 4 and 5: repo hygiene, the env template and the README setup table, the uv backend project (index and torch source before `torch` is added), Settings, the LLM factory, schemas, observability, the FastAPI app, Alembic, Docker, then the WXT extension with generated API types. The plan ends with an automated checkpoint, a report of the `.env` variables the user must set, and a manual verification checkpoint for the Phase 0 "Done when" criteria.
+Build the Phase 0 skeleton in the order of build plan sections 4 and 5: repo hygiene, the env template and the README setup table, the uv backend project, Settings, the LLM factory, the health endpoint with Langfuse tracing, Alembic, Docker, then the WXT extension with generated API types. The plan ends with the `.env` variables the user must set and a manual check of the Phase 0 "Done when" criteria.
+
+Phase 0 is done when `docker compose up` brings up DB + API, the side panel shows "backend OK", and a request shows up as a named trace in Langfuse. Anything that doesn't serve that goal is out of scope.
+
+Scope was trimmed on 2026-10-30 (see the `engineering` steering file). Tasks 1–4 are kept as they were built. From task 5 onward:
+- Tests use a few clear examples per behavior. No 100-case parametrized tests, no tests of library behavior, no tests of file contents.
+- No error handling for failures that the library already handles or that can't happen in Phase 0.
 
 Rules that apply to every task:
-- Python dependencies only via `uv add` / `uv add --dev` / `uv add --group eval`. Extension dependencies only via `pnpm add` / `pnpm add -D`. Never hand-edit dependency arrays in `pyproject.toml` or `package.json`.
+- Python dependencies only via `uv add` / `uv add --dev` / `uv add --group eval`. Extension dependencies only via `pnpm add` / `pnpm add -D`.
 - Never read, write, copy or source `.env` or `extension/.env`. New settings go into `.env.example` (no secret values) and `app/config.py`.
-- No model-name literals in `backend/app/`. Model names live only in `.env.example` and the user's `.env`.
-- Tests never call live LLM, retailer or Langfuse APIs. They build `Settings(_env_file=None, ...)` and run under the loopback-only socket guard in `tests/conftest.py`.
-- Property tests use `pytest.mark.parametrize` over 100 cases from a fixed-seed `random.Random`, with no `hypothesis`, and carry the comment `# Feature: phase-0-setup, Property N: <title>`.
+- No model-name literals in `backend/app/`.
+- Tests never call live LLM, retailer or Langfuse APIs. They build `Settings(_env_file=None, ...)` and run under the socket guard in `tests/conftest.py`.
 
 ## Tasks
 
@@ -22,7 +27,7 @@ Rules that apply to every task:
   - [x] 1.2 Write the root `README.md` "Setup" section (the Setup_Guide)
     - Create `README.md` with a "Setup" section containing the design's variables table with columns Variable | File | Where to get the value | Required in Phase 0
     - List every non-commented variable in `.env.example` and `extension/.env.example` (including `WXT_BACKEND_URL`), plus the note that the user sets `CORS_ALLOWED_ORIGINS` from the ID in `chrome://extensions`
-    - The table is the same list task 12.1 reports to the user
+    - The table is the same list task 11 reports to the user
     - _Requirements: 4.8, 4.9_
 
 - [x] 2. Backend uv project and dependencies
@@ -120,132 +125,101 @@ Rules that apply to every task:
     - Unsupported provider and malformed spec cases are covered by 4.3 and 4.4; together 4.2–4.6 cover every case in Req 13.4
     - _Requirements: 6.4, 6.11, 13.4, 13.8_
 
-- [ ] 5. Checkpoint - Ensure all tests pass
-  - Run `uv run pytest` and `uv run ruff check .` in `backend/`. Ensure all tests pass, ask the user if questions arise.
+- [ ] 5. Checkpoint: backend checks pass
+  - In `backend/`: `uv run pytest -q`, `uv run ruff check .`, `uv run mypy app`. Fix anything that fails.
 
-- [ ] 6. Schemas, observability and the FastAPI app
-  - [ ] 6.1 Implement `backend/app/schemas.py`
+- [ ] 6. Health endpoint with Langfuse tracing
+  - [ ] 6.1 Add `HealthResponse` to `backend/app/schemas.py`
     - `HealthResponse(BaseModel)` with `status: Literal["ok"]`
     - _Requirements: 8.2, 8.3_
 
   - [ ] 6.2 Implement `backend/app/observability.py`
-    - `init_langfuse(settings)` building `Langfuse(...)` from Settings only, with `tracing_enabled=False` when either key is missing; check the installed SDK for the base URL keyword (`base_url`, older alias `host`)
-    - `shutdown_langfuse()` flushing via `get_client().shutdown()` and logging, not raising, on failure
-    - `new_callback_handler()` returning a new `langfuse.langchain.CallbackHandler` every call
-    - `trace_attributes(trace_name, session_id=None, tags=None)` context manager wrapping `propagate_attributes` with `PROVIDER_TAG = "groq-free"` first in the tags
+    - `init_langfuse(settings)`: build `Langfuse(...)` from Settings, with `tracing_enabled=False` when either key is missing. Check the installed SDK for the base URL keyword (`base_url`, older alias `host`)
+    - `shutdown_langfuse()`: `get_client().shutdown()`, logging instead of raising on failure
+    - `new_callback_handler()`: return a new `CallbackHandler` on every call
+    - `trace_attributes(trace_name, session_id=None, tags=None)`: context manager around `propagate_attributes`, with `PROVIDER_TAG = "groq-free"` first in the tags
     - Re-export `observe`
-    - No try/except inside `trace_attributes` around `propagate_attributes`; setup errors propagate. Only `shutdown_langfuse` catches, because it runs outside the request path
-    - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.8, 9.9, 9.10_
+    - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.8, 9.9_
 
   - [ ] 6.3 Implement `backend/app/main.py`
-    - `create_app(settings=None)` resolves `settings = settings or get_settings()` and defines a `lifespan` closure calling `init_langfuse(settings)` on startup and `shutdown_langfuse()` on shutdown, so tests' Settings drive Langfuse
-    - `FastAPI` with title "Screen to Cart API", `CORSMiddleware` using `settings.cors_allowed_origins`, methods `GET`/`POST`, `allow_credentials=False`
-    - `GET /health` with `response_model=HealthResponse`, running `_health_check()` (decorated `@observe(name="health")`) inside `trace_attributes("health")`; no LLM, retailer or DB calls
-    - No try/except around `trace_attributes`/`propagate_attributes` or `observe` on the request path, so a tracing setup failure returns 500 instead of a 200 without tracing
+    - `create_app(settings=None)` with a `lifespan` that calls `init_langfuse(settings)` on startup and `shutdown_langfuse()` on shutdown
+    - Title "Screen to Cart API"; `CORSMiddleware` with `settings.cors_allowed_origins`, methods `GET`/`POST`, `allow_credentials=False`
+    - `GET /health` with `response_model=HealthResponse`, running inside `trace_attributes("health")` and an `@observe(name="health")` function. No LLM, retailer or DB calls
     - Module-level `app = create_app()`
-    - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 9.6, 9.7, 9.8, 9.9, 9.10_
+    - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 9.6, 9.7, 9.8, 9.9_
 
-  - [ ]* 6.4 Write property test for CallbackHandler distinctness in `tests/test_observability.py`
-    - **Property 7: Each call returns a new CallbackHandler**
-    - `n` in 2..20 with Langfuse disabled; assert pairwise distinct `id()` and `isinstance(..., CallbackHandler)`
-    - **Validates: Requirements 9.2, 9.3, 13.6**
+  - [ ] 6.4 Write `backend/tests/test_health.py`
+    - With Langfuse disabled, `GET /health` returns 200 and `{"status": "ok"}`. Use `with TestClient(create_app(settings))` so the lifespan runs with test settings
+    - `/openapi.json` contains `HealthResponse`
+    - _Requirements: 8.2, 8.3, 13.5_
 
-  - [ ]* 6.5 Write unit tests for the health endpoint, OpenAPI, CORS and trace attributes
-    - `tests/test_health.py`: `GET /health` returns 200 and `{"status": "ok"}` with Langfuse disabled, and again with dummy keys and an unroutable `LANGFUSE_BASE_URL` (socket guard blocks export); `/openapi.json` contains `HealthResponse`; preflight `OPTIONS /health` echoes an allowed origin and omits the header for a disallowed one. Use `create_app(test_settings)` inside `with TestClient(app)` so the lifespan runs with `test_settings`
-    - `tests/test_health.py`: monkeypatch `app.observability.propagate_attributes` with a stub that raises `RuntimeError`, call `GET /health` through `TestClient(app, raise_server_exceptions=False)` and assert status 500
-    - `tests/test_observability.py`: patch `propagate_attributes` and assert `trace_attributes("health")` passes `trace_name="health"` and tags containing `groq-free`
-    - _Requirements: 8.2, 8.3, 8.4, 9.4, 9.6, 9.8, 9.9, 9.10, 13.5_
-
-- [ ] 7. Database migrations
-  - [ ] 7.1 Set up Alembic with the async template and the pgvector migration
-    - In `backend/` run `uv run alembic init -t async app/db/migrations`, move/keep `alembic.ini` at `backend/` with `script_location = app/db/migrations` and an empty `sqlalchemy.url`
-    - Edit `env.py` to build the async engine from `get_settings().database_url` with `NullPool`, raising `RuntimeError("DATABASE_URL is not set")` when unset; `target_metadata = None`
-    - Add `versions/0001_enable_pgvector.py` (`revision = "0001"`, `down_revision = None`) running `CREATE EXTENSION IF NOT EXISTS vector` and `DROP EXTENSION IF EXISTS vector` on downgrade
-    - Confirm `uv run alembic history` lists `0001` (offline; needs no database)
-    - _Requirements: 7.1, 7.2, 7.3, 7.5_
+- [ ] 7. Alembic with the pgvector migration
+  - In `backend/`: `uv run alembic init -t async app/db/migrations`; keep `alembic.ini` in `backend/` with `script_location = app/db/migrations` and an empty `sqlalchemy.url`
+  - `env.py`: async engine from `get_settings().database_url` with `NullPool`; raise `RuntimeError("DATABASE_URL is not set")` when unset; `target_metadata = None`
+  - `versions/0001_enable_pgvector.py` (`revision = "0001"`): `CREATE EXTENSION IF NOT EXISTS vector`, and `DROP EXTENSION IF EXISTS vector` on downgrade
+  - Confirm `uv run alembic history` lists `0001` (needs no database)
+  - _Requirements: 7.1, 7.2, 7.3, 7.5_
 
 - [ ] 8. Docker image and Compose stack
-  - [ ] 8.1 Write `backend/.dockerignore` and `backend/Dockerfile`
-    - `.dockerignore` excludes `.env`, `.venv`, `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`
-    - Dockerfile exactly as in the design: `python:3.12-slim`, uv copied from `ghcr.io/astral-sh/uv`, `libglib2.0-0`, two-step `uv sync --frozen --no-dev` (with `--no-install-project` first), `CMD` running `alembic upgrade head` then `uvicorn app.main:app --host 0.0.0.0 --port 8000`
-    - _Requirements: 2.1, 2.2, 2.3_
+  - `backend/.dockerignore`: `.env`, `.venv`, `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`
+  - `backend/Dockerfile` as in the design: `python:3.12-slim`, uv from `ghcr.io/astral-sh/uv`, `libglib2.0-0`, `uv sync --frozen --no-dev` (`--no-install-project` first for layer caching), `CMD` runs `alembic upgrade head` then `uvicorn app.main:app --host 0.0.0.0 --port 8000`
+  - `docker-compose.yml`: `name: screen-to-cart`; `db` on `pgvector/pgvector:pg16` with `POSTGRES_DB: screen_to_cart`, port 5432, a `pgdata` volume and a `pg_isready` healthcheck; `backend` built from `./backend` with `env_file: [.env]`, `environment.DATABASE_URL` pointing at host `db`, port 8000, `depends_on.db.condition: service_healthy`
+  - Run `docker build -t screen-to-cart-backend backend` and confirm it builds
+  - _Requirements: 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4, 3.6_
 
-  - [ ] 8.2 Write `docker-compose.yml`
-    - `name: screen-to-cart`; `db` service on `pgvector/pgvector:pg16` with `POSTGRES_DB: screen_to_cart`, port 5432, `pgdata` volume and a `pg_isready` healthcheck
-    - `backend` service built from `./backend`, `env_file: [.env]` by reference, `environment.DATABASE_URL` overriding the host to `db`, port 8000, `depends_on.db.condition: service_healthy`
-    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.6_
-
-  - [ ]* 8.3 Write repository hygiene tests in `tests/test_repo_hygiene.py`
-    - `.env.example` has every required name, keeps the non-secret values, leaves secrets empty, has `SPONSORSHIP_MODEL=` and `# Later: ANTHROPIC_API_KEY=` (reads `.env.example` only, never `.env`)
-    - `README.md` has a "Setup" section whose table lists every non-commented variable in `.env.example` and `extension/.env.example`
-    - No file under `backend/app/` contains `qwen/`, `gpt-oss`, `claude-` or `siglip-`
-    - `pyproject.toml` contains the `pytorch-cpu` index and the `torch` source
-    - _Requirements: 1.3, 1.4, 4.1, 4.2, 4.3, 4.4, 4.5, 4.8, 4.9, 6.8_
-
-- [ ] 9. Checkpoint - Ensure all backend tests pass
-  - Run `uv run pytest`, `uv run ruff check .` and `uv lock --check` in `backend/`. Run `docker build -t screen-to-cart-backend backend` and confirm `docker run --rm screen-to-cart-backend python -c "import pytest"` and `... "import pandas"` both fail (dev and eval groups excluded). Ensure all tests pass, ask the user if questions arise.
-
-- [ ] 10. Extension
-  - [ ] 10.1 Scaffold the WXT React extension and add packages
-    - From the repo root run `pnpm dlx wxt@latest init extension --template react --pm pnpm` (non-interactive; if the installed WXT rejects these flags, stop and ask the user to run `pnpm dlx wxt@latest init extension` and pick React + pnpm)
-    - Set `"name": "screen-to-cart-extension"` in `extension/package.json` and add the script `"gen:api": "openapi-typescript http://localhost:8000/openapi.json -o lib/api-types.ts"` (scripts are not dependency fields)
-    - In `extension/` run `pnpm add @microsoft/fetch-event-source openapi-fetch` and `pnpm add -D openapi-typescript`; `pnpm-lock.yaml` is committed
+- [ ] 9. Extension
+  - [ ] 9.1 Scaffold the WXT React extension and add packages
+    - From the repo root: `pnpm dlx wxt@latest init extension --template react --pm pnpm`. If the installed WXT rejects these flags, stop and ask the user to run `pnpm dlx wxt@latest init extension` and pick React + pnpm
+    - In `extension/package.json`: set `"name": "screen-to-cart-extension"` and add the script `"gen:api": "openapi-typescript http://localhost:8000/openapi.json -o lib/api-types.ts"`
+    - In `extension/`: `pnpm add @microsoft/fetch-event-source openapi-fetch` and `pnpm add -D openapi-typescript`
     - Remove the template's `popup` and `content` entrypoints
-    - Create `extension/.env.example` containing only the `WXT_BACKEND_URL=` line and its comment from the design
+    - Create `extension/.env.example` with only the `WXT_BACKEND_URL=` line and its comment from the design
     - _Requirements: 10.1, 10.2, 10.5, 10.6, 10.7, 11.3, 11.5_
 
-  - [ ] 10.2 Configure the manifest and background script
-    - `extension/wxt.config.ts`: React module, `manifest.name = "Screen to Cart"`, `manifest.description = "Find anything you see in a video, compared across stores."`, `permissions: ["sidePanel"]`
-    - `extension/entrypoints/background.ts`: `browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })`
+  - [ ] 9.2 Configure the manifest and background script
+    - `wxt.config.ts`: React module, `manifest.name = "Screen to Cart"`, `manifest.description = "Find anything you see in a video, compared across stores."`, `permissions: ["sidePanel"]`
+    - `entrypoints/background.ts`: `browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })`
     - _Requirements: 10.3, 10.4, 10.8_
 
-  - [ ] 10.3 Generate `extension/lib/api-types.ts` from the running backend
-    - Start the backend as a background process (`uv run uvicorn app.main:app --port 8000` in `backend/`, via the background-process tool), run `pnpm gen:api` in `extension/`, then stop the process
-    - Never edit `lib/api-types.ts` by hand; commit the generated file so the extension builds without a running backend
-    - If the backend cannot start in the agent environment, stop and ask the user to run the two commands
+  - [ ] 9.3 Generate `extension/lib/api-types.ts`
+    - Start `uv run uvicorn app.main:app --port 8000` in `backend/` as a background process, run `pnpm gen:api` in `extension/`, then stop the process. Commit the generated file
+    - If the backend can't start in the agent environment, stop and ask the user to run the two commands
     - _Requirements: 11.1, 11.2_
 
-  - [ ] 10.4 Implement the typed client in `extension/lib/api.ts`
-    - `BACKEND_URL` from `import.meta.env.WXT_BACKEND_URL` with fallback `http://localhost:8000`; `api = createClient<paths>({ baseUrl: BACKEND_URL })`
-    - No hand-written payload types; import only from `./api-types`
+  - [ ] 9.4 Implement the typed client in `extension/lib/api.ts`
+    - `BACKEND_URL` from `import.meta.env.WXT_BACKEND_URL`, falling back to `http://localhost:8000`; `api = createClient<paths>({ baseUrl: BACKEND_URL })`
     - _Requirements: 11.2, 11.4, 11.5_
 
-  - [ ] 10.5 Build the side panel health check
+  - [ ] 9.5 Build the side panel health check
     - `entrypoints/sidepanel/index.html` and `main.tsx` mounting `<App />`
-    - `healthStatus.ts`: `HealthStatus` type and pure `healthStatusFrom(result)` as in the design
-    - `HealthStatus.tsx`: starts in `checking` ("Checking backend…"), calls `api.GET('/health')` once on mount in `try/catch`, renders `backend OK` or "Backend unreachable at {BACKEND_URL}"
-    - `App.tsx`: renders "Screen to Cart" and `<HealthStatus />`; one component per file
-    - Run `pnpm build` and `pnpm exec tsc --noEmit` in `extension/` and confirm both pass
+    - `healthStatus.ts` with the `HealthStatus` type and `healthStatusFrom(result)` from the design
+    - `HealthStatus.tsx`: shows "Checking backend…", calls `api.GET('/health')` once on mount, then shows `backend OK` or "Backend unreachable at {BACKEND_URL}"
+    - `App.tsx`: "Screen to Cart" heading and `<HealthStatus />`
     - _Requirements: 12.1, 12.2, 12.3, 12.4_
 
-- [ ] 11. Checkpoint - Ensure all automated checks pass
-  - Backend: `uv run pytest`, `uv run ruff check .`, `uv lock --check`. Extension: `pnpm build`, `pnpm exec tsc --noEmit`. Confirm `git status` shows no `.env` file staged or tracked. Ensure all tests pass, ask the user if questions arise.
+- [ ] 10. Checkpoint: all automated checks pass
+  - Backend: `uv run pytest -q`, `uv run ruff check .`, `uv run mypy app`. Extension: `pnpm build`, `pnpm exec tsc --noEmit`. Confirm `git ls-files` lists no `.env` file. Fix anything that fails.
 
-- [ ] 12. Hand-off to the user
-  - [ ] 12.1 Report the variables the user must set by hand
-    - Do not open or modify `.env` or `extension/.env`. Report the same list as the `README.md` "Setup" table (task 1.2) and point the user to it. Tell the user to create `.env` from `.env.example` and set:
-      - `GROQ_API_KEY` (console.groq.com)
-      - `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` (the "Screen to Cart" Langfuse project)
-      - `CORS_ALLOWED_ORIGINS=chrome-extension://<id>` using the ID shown in `chrome://extensions` after loading the unpacked extension
-      - `EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET`, `BESTBUY_API_KEY`: optional until Phase 3
-      - Non-secret values (`DATABASE_URL`, model specs, `LLM_MODE`, `LANGFUSE_BASE_URL`, `SIGLIP_MODEL`) copied from `.env.example`
-      - Optional `WXT_BACKEND_URL` in `extension/.env`, only if the backend is not on `http://localhost:8000`
-    - _Requirements: 4.7, 4.8_
+- [ ] 11. Tell the user which variables to set
+  - Don't open `.env`. Point the user to the README "Setup" table and list what to set after copying `.env.example` to `.env`:
+    - `GROQ_API_KEY` (console.groq.com)
+    - `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` (the "Screen to Cart" Langfuse project)
+    - `CORS_ALLOWED_ORIGINS=chrome-extension://<id>`, using the ID from `chrome://extensions` after loading the unpacked extension
+    - `EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET`, `BESTBUY_API_KEY`: optional until Phase 3
+    - Optional `WXT_BACKEND_URL` in `extension/.env`, only if the backend isn't on `http://localhost:8000`
+  - _Requirements: 4.7, 4.8_
 
-- [ ] 13. Final checkpoint - Phase 0 "Done when" (manual verification by the user)
-  - These steps need the user's `.env` values and Chrome, so the user runs them; the agent only provides the commands and waits for results.
-  - **Manual (user):** `docker compose up --build`; confirm both services start, then `curl localhost:8000/health` returns `{"status":"ok"}` (Req 3.5, 14.1)
-  - **Manual (user):** `docker compose config` shows `DATABASE_URL` with host `db` (Req 3.4); `docker compose exec db psql -U postgres -d screen_to_cart -c "select extname from pg_extension"` lists `vector`, and `docker compose exec backend alembic upgrade head` is a no-op on rerun (Req 7.4, 7.5)
-  - **Manual (user):** load `extension/.output/chrome-mv3` unpacked in Chrome, set `CORS_ALLOWED_ORIGINS` to its origin, restart the backend, click the toolbar icon: the side panel shows `backend OK`; with the backend stopped it shows "Backend unreachable" (Req 12.2, 12.3, 14.2)
-  - **Manual (user):** with real Langfuse keys, open the side panel and confirm a trace named `health` tagged `groq-free` in the Screen to Cart project. This uses Langfuse units only, no LLM quota (Req 9.7, 14.3)
-  - Ensure all checks pass, ask the user if questions arise.
+- [ ] 12. Final checkpoint: Phase 0 "Done when" (the user runs these)
+  - These need the user's `.env` and Chrome, so the agent gives the commands and waits for the results.
+  - `docker compose up --build`, then `curl localhost:8000/health` returns `{"status":"ok"}` (Req 3.5, 14.1)
+  - `docker compose exec db psql -U postgres -d screen_to_cart -c "select extname from pg_extension"` lists `vector` (Req 7.4)
+  - Load `extension/.output/chrome-mv3` unpacked, set `CORS_ALLOWED_ORIGINS`, restart the backend, click the toolbar icon: the side panel shows `backend OK`. With the backend stopped it shows "Backend unreachable" (Req 12.2, 12.3, 14.2)
+  - In Langfuse, a trace named `health` tagged `groq-free` appears in the Screen to Cart project (Req 9.7, 14.3)
 
 ## Notes
 
-- Tasks marked with `*` are optional test sub-tasks and can be skipped for a faster setup; the core implementation tasks are not optional.
-- Property tests use seeded `pytest.mark.parametrize` instead of `hypothesis` to stay within the section 5 dev dependency list.
-- `docker compose` commands need the user's `.env` (referenced by `env_file`), so they are in the manual checkpoint rather than the automated one.
-- The extension has no test runner in Phase 0; `healthStatusFrom` is pure so a Vitest test can be added later.
+- Tasks 3.3–3.5 and 4.2–4.5 were written as 100-case parametrized tests before the scope trim. They pass and stay as they are; don't extend that pattern.
+- The extension has no test runner in Phase 0.
 
 ## Task Dependency Graph
 
@@ -258,16 +232,15 @@ Rules that apply to every task:
     { "id": 3, "tasks": ["2.3"] },
     { "id": 4, "tasks": ["3.1"] },
     { "id": 5, "tasks": ["3.2", "4.1", "6.1"] },
-    { "id": 6, "tasks": ["3.3", "4.2", "6.2", "7.1"] },
+    { "id": 6, "tasks": ["3.3", "4.2", "6.2", "7"] },
     { "id": 7, "tasks": ["3.4", "4.3", "6.3"] },
-    { "id": 8, "tasks": ["3.5", "4.4", "6.4", "8.1"] },
-    { "id": 9, "tasks": ["3.6", "4.5", "6.5", "8.2"] },
-    { "id": 10, "tasks": ["4.6", "10.1"] },
-    { "id": 11, "tasks": ["8.3", "10.2"] },
-    { "id": 12, "tasks": ["10.3"] },
-    { "id": 13, "tasks": ["10.4"] },
-    { "id": 14, "tasks": ["10.5"] },
-    { "id": 15, "tasks": ["12.1"] }
+    { "id": 8, "tasks": ["3.5", "4.4", "6.4", "8"] },
+    { "id": 9, "tasks": ["3.6", "4.5", "9.1"] },
+    { "id": 10, "tasks": ["4.6", "9.2"] },
+    { "id": 11, "tasks": ["9.3"] },
+    { "id": 12, "tasks": ["9.4"] },
+    { "id": 13, "tasks": ["9.5"] },
+    { "id": 14, "tasks": ["11"] }
   ]
 }
 ```

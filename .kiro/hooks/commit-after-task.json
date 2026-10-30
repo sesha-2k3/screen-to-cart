@@ -2,12 +2,12 @@
   "version": "v1",
   "hooks": [
     {
-      "name": "Draft a commit after each top-level spec task",
-      "description": "After a spec task completes, asks the agent to draft a Conventional Commits message and wait for approval before committing. Only acts on top-level tasks (2, 3, ...), not subtasks. Uses credits (agent action).",
+      "name": "Auto-commit after each top-level spec task",
+      "description": "After a top-level spec task completes, commits the task's files with a short Conventional Commits message. Never pushes. Uses credits (agent action).",
       "trigger": "PostTaskExec",
       "action": {
         "type": "agent",
-        "prompt": "A spec task was just marked completed. Only act if a top-level task (an ID with no dot, like '3') is now completed, either directly or because its last subtask finished and the parent auto-completed. If only a subtask completed and its parent is still open, do nothing and carry on.\n\nOtherwise:\n1. Run `git status --short -uall` and `git diff` to see what the task changed.\n2. Draft a Conventional Commits message. Subject: `<type>(<scope>): <imperative summary, under 60 chars>`. Types: feat, fix, build, chore, test, docs, refactor. Scopes: backend, extension, graph, retailers, db, eval, kiro, docs. Body: a few short bullets covering non-obvious changes and decisions, not a file list. Footer: `Spec: <spec folder name> task <N> (Req <ids from the subtasks' _Requirements lines>)`.\n3. List the exact files to stage: the files this task created or changed, plus the spec's tasks.md and tasks.meta.json. Never stage .env or anything gitignored. If there are changes unrelated to the task, list them separately and leave them out.\n4. Show me the message and the file list, then ask with the user input tool whether to commit, edit the message, or skip. Do not start the next task until I answer.\n5. On approval, `git add` each listed file by name and `git commit`. Never push, amend, or use --no-verify. If a pre-commit hook fails, report the error and stop."
+        "prompt": "A spec task was just marked completed. Only act if a top-level task (an ID with no dot, like '3') is now completed, either directly or because its last subtask finished. If only a subtask completed and its parent is still open, do nothing.\n\nOtherwise, commit without asking:\n1. Run `git status --short -uall` to see what changed.\n2. Stage by name only the files this task created or changed, plus the spec's tasks.md and tasks.meta.json. Never stage .env or anything gitignored. Leave unrelated changes unstaged.\n3. Commit with a one-line subject: `<type>(<scope>): <summary>`, under 60 characters. Types: feat, fix, build, chore, test, docs, refactor. Scopes: backend, extension, graph, retailers, db, eval, kiro, docs. Add a body only if a decision isn't obvious from the diff, and keep it to one or two short lines. No file lists, no requirement IDs.\n4. Print the commit hash and subject, then continue.\n\nNever push, amend, or use --no-verify. If a pre-commit hook fails, report the error and stop."
       }
     }
   ]

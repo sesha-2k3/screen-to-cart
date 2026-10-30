@@ -12,3 +12,4 @@ fileMatchPattern: ["backend/tests/**/*", "extension/**/*.test.*"]
 - `check_quality` and the refine loop have a test proving the loop stops after 2 attempts.
 - Frame selection has a test with a sharp and a blurred image proving the sharp one wins.
 - Name tests `test_<unit>_<behavior>`.
+- Keep tests small: a few clear example cases per behavior. No generated 100-case parametrized tests, no tests of library behavior or file contents (see `engineering.md`).

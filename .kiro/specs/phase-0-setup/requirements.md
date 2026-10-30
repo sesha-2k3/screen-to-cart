@@ -167,7 +167,7 @@ Out of scope for Phase 0: the per-model rate limiter, record/replay behaviour, L
 7. WHEN a `GET /health` request is received with valid Langfuse credentials, THE Backend SHALL produce a Langfuse trace with the Health_Endpoint's trace name and the tag `groq-free`.
 8. IF Langfuse credentials are missing, THEN THE Observability_Module SHALL disable tracing so that the Tracing_Wrapper runs as a no-op, and THE Health_Endpoint SHALL return HTTP 200.
 9. IF the Langfuse host is unreachable when traces are exported in the background, THEN THE Health_Endpoint SHALL return HTTP 200.
-10. IF the Tracing_Wrapper raises an exception while being established, THEN THE Health_Endpoint SHALL return an HTTP 500 response instead of returning HTTP 200 without tracing; this case is distinct from missing credentials (criterion 8) and background export failure (criterion 9).
+10. (Removed on 2026-10-30 as over-engineering: no special handling for tracing setup errors.)
 
 ### Requirement 10: Extension project
 
@@ -218,7 +218,7 @@ Out of scope for Phase 0: the per-model rate limiter, record/replay behaviour, L
 3. THE Test_Suite SHALL cover the Settings sponsorship fallback to REFINE_MODEL and the LLM_MODE validation.
 4. THE Test_Suite SHALL cover the LLM_Factory for a `groq` Model_Spec, an `anthropic` Model_Spec without `langchain-anthropic` installed, an invalid Role, an unsupported provider and a malformed Model_Spec.
 5. THE Test_Suite SHALL cover the Health_Endpoint returning HTTP 200 with Langfuse disabled or mocked.
-6. THE Test_Suite SHALL cover the CallbackHandler helper returning a distinct instance on each call.
+6. (Removed on 2026-10-30: `new_callback_handler()` is a one-line constructor call; no dedicated test.)
 7. THE Test_Suite SHALL obtain configuration from test-provided values without reading the Env_File.
 8. THE Test_Suite SHALL assert that the LLM_Factory raises ProviderNotInstalledError for an `anthropic` Model_Spec without `langchain-anthropic` installed.
 

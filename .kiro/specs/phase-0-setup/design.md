@@ -23,8 +23,8 @@ Phase 0 is done when `docker compose up` brings up the database and the API, the
 | Compose DB host | `env_file: .env` by reference plus an `environment:` override of `DATABASE_URL` pointing at host `db` | Compose's `environment:` takes precedence over `env_file:`; nothing reads or copies `.env` |
 | Migrations at startup | Backend container runs `alembic upgrade head` before `uvicorn` | `docker compose up` alone gives a migrated DB (Req 3.5, 14.1) |
 | Langfuse when unconfigured | Client created with `tracing_enabled=False` when either key is missing | `/health` must return 200 without credentials (Req 9.8) |
-| Tracing setup errors | Not caught on the request path; `/health` returns 500 | A 200 without tracing would hide a broken setup (Req 9.10) |
-| Property tests | `pytest.mark.parametrize` over cases from a seeded `random.Random` (100 cases each) | Avoids adding a dev dependency beyond the list in section 5 (Req 1.7). `hypothesis` can be added later with `uv add --dev hypothesis` if wanted |
+| Tracing setup errors | No special handling | The SDK already logs and drops bad values instead of raising; extra error paths are not worth the code (Req 9.10 removed) |
+| Tests | Example-based tests for remaining work | Tasks 3–4 used seeded 100-case parametrized tests; those stay, but new tests use a few clear examples (see `engineering.md` steering) |
 
 ### Langfuse SDK API (verified)
 
@@ -471,7 +471,7 @@ def trace_attributes(trace_name: str, session_id: str | None = None,
 - Credentials come only from Settings (Req 9.1). The SDK's own env reading is not relied on.
 - With missing keys the client has `tracing_enabled=False`, so `observe` and `propagate_attributes` run as no-ops and `/health` returns 200 (Req 9.8).
 - The Langfuse SDK exports spans on a background thread, and per its reference, `propagate_attributes` logs and drops invalid values instead of raising. Export failures (bad keys, unreachable host) are logged by the SDK and never reach the request path, which is how `/health` stays 200 (Req 9.9).
-- `trace_attributes` has no `try/except`, and nothing in `main.py` wraps it or the `@observe` call in one. If `propagate_attributes` or the `observe` wrapper raises while being set up, the exception propagates and FastAPI returns 500 (Req 9.10). A request is never answered with 200 after tracing setup has failed. Only `shutdown_langfuse` catches and logs, because it runs outside the request path.
+- `trace_attributes` has no `try/except`. Only `shutdown_langfuse` catches and logs, because it runs outside the request path.
 - `PROVIDER_TAG` is a constant in Phase 0 because only Groq is wired. Section 7 says to change the tag at the switch; making it a setting then is a one-line change and out of scope now.
 
 ### FastAPI app (`app/main.py`, Req 8, 9.6)
@@ -625,7 +625,6 @@ Database: no tables in Phase 0. The only schema change is the `vector` extension
 | `groq` without `GROQ_API_KEY` | `LlmConfigError` naming `GROQ_API_KEY`; secrets never appear in messages |
 | Langfuse keys missing | Client created with `tracing_enabled=False`; `observe` and `propagate_attributes` are no-ops; `/health` returns 200 (Req 9.8) |
 | Langfuse unreachable or keys wrong | SDK background exporter logs the failure; request path unaffected; `/health` returns 200 (Req 9.9) |
-| `trace_attributes`/`propagate_attributes` or the `@observe` wrapper raises during setup | Not caught; the exception propagates and FastAPI returns 500 (Req 9.10) |
 | `shutdown_langfuse` fails at app shutdown | Logged and swallowed; outside the request path |
 | `DATABASE_URL` unset when running Alembic | `RuntimeError("DATABASE_URL is not set")` |
 | Postgres not ready | Compose holds the backend until `pg_isready` passes |
@@ -674,11 +673,6 @@ For any string `m`, constructing Settings with `LLM_MODE=m` succeeds with `llm_m
 
 **Validates: Requirements 5.4, 5.5, 13.3**
 
-### Property 7: Each call returns a new CallbackHandler
-
-For any `n` between 2 and 20, calling `new_callback_handler()` `n` times returns `n` pairwise distinct objects (distinct `id()`), each an instance of `langfuse.langchain.CallbackHandler`.
-
-**Validates: Requirements 9.2, 9.3, 13.6**
 
 ### Property 8: CORS origin list parse round trip
 
@@ -711,7 +705,6 @@ There is no PBT library in the planned dev dependencies, so each property test u
 | 4 | `test_llm_factory.py` | each Role × random model names; socket guard active |
 | 5 | `test_config.py` | `s` drawn from `None`, `""`, whitespace, random specs |
 | 6 | `test_config.py` | the three valid values plus random strings, `LIVE`, `" live"`, `""` |
-| 7 | `test_observability.py` | `n` in 2..20; Langfuse disabled |
 | 8 | `test_config.py` | lists of 0–5 `chrome-extension://[a-p]{32}` and `http://localhost:<port>` origins |
 
 ### Example and edge-case unit tests
@@ -721,17 +714,13 @@ There is no PBT library in the planned dev dependencies, so each property test u
 - Settings source precedence (Req 5.8, 5.9): the test writes its own dotenv file under `tmp_path` (e.g. `REFINE_MODEL=groq:from-file` and `DISAMBIGUATE_MODEL=groq:file-only`), sets `REFINE_MODEL=groq:from-env` and `IDENTIFY_VISION_MODEL=groq:env-only` with `monkeypatch.setenv`, then builds `Settings(_env_file=tmp_path / "test.env")`. It asserts `refine_model == "groq:from-env"` (env wins), `disambiguate_model == "groq:file-only"` and `identify_vision_model == "groq:env-only"` (both sources load into one instance). The test never reads the real `.env`.
 - `groq` spec with no `GROQ_API_KEY`: `LlmConfigError` naming the variable.
 - Role spec unset: error names the role and env var.
-- `GET /health` returns 200 and `{"status": "ok"}` with Langfuse disabled (Req 8.2, 9.8, 13.5); again with keys set to dummy values and `base_url` pointing at an unroutable host (the socket guard blocks it, the exporter fails in the background) (Req 9.9).
-- Tracing setup failure (Req 9.10): monkeypatch `app.observability.propagate_attributes` with a stub that raises `RuntimeError`, build the app with `create_app(test_settings)`, call `GET /health` through `TestClient(app, raise_server_exceptions=False)`, and assert status 500. This confirms nothing swallows the exception and returns 200.
+- `GET /health` returns 200 and `{"status": "ok"}` with Langfuse disabled (Req 8.2, 9.8, 13.5).
 - `/openapi.json` contains `HealthResponse` (Req 8.3).
-- CORS preflight `OPTIONS /health` with an allowed `Origin` returns `access-control-allow-origin` equal to that origin; with a disallowed origin the header is absent (Req 8.4).
-- `trace_attributes` calls `propagate_attributes` with `trace_name="health"` and tags containing `groq-free` (patched), and `_health_check` is wrapped by `observe` (Req 9.4–9.6).
-- `test_repo_hygiene.py`: `.env.example` has every required name, keeps the non-secret values, leaves secrets empty, has `SPONSORSHIP_MODEL=` and `# Later: ANTHROPIC_API_KEY=` (Req 4.1–4.5); `README.md` has a "Setup" section whose table lists every non-commented variable in `.env.example` and `extension/.env.example` (Req 4.8, 4.9); no file under `backend/app/` contains `qwen/`, `gpt-oss`, `claude-` or `siglip-` (Req 6.8); `pyproject.toml` contains the `pytorch-cpu` index and `torch` source (Req 1.3, 1.4). These tests read `.env.example`, `extension/.env.example` and `README.md` only, never `.env`.
+- The Langfuse trace name, tag and CORS behaviour are checked by hand in the final checkpoint rather than with mocks.
 
 ### Smoke and integration checks (manual or scripted, not in `uv run pytest`)
 
 - `uv lock --check` (Req 1.10).
-- `docker build backend` then `docker run --rm <image> python -c "import pytest"` fails and `python -c "import pandas"` fails (Req 2.2).
 - `docker compose config` shows `DATABASE_URL` with host `db` (Req 3.4).
 - `docker compose up`, then `curl localhost:8000/health` returns 200 (Req 3.5, 14.1).
 - `docker compose exec db psql -U postgres -d screen_to_cart -c "select extname from pg_extension"` lists `vector`; rerunning `alembic upgrade head` is a no-op (Req 7.4, 7.5).
