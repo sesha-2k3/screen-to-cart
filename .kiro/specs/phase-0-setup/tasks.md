@@ -25,20 +25,20 @@ Rules that apply to every task:
     - The table is the same list task 12.1 reports to the user
     - _Requirements: 4.8, 4.9_
 
-- [ ] 2. Backend uv project and dependencies
-  - [ ] 2.1 Initialise the uv project and add the non-dependency `pyproject.toml` sections
+- [x] 2. Backend uv project and dependencies
+  - [x] 2.1 Initialise the uv project and add the non-dependency `pyproject.toml` sections
     - From the repo root run `uv init backend --app --python 3.12 --name screen-to-cart-backend`; confirm `backend/.python-version` contains `3.12`
     - Delete the template's `backend/main.py` (the app lives in `backend/app/main.py`)
     - Before any `uv add`, add to `backend/pyproject.toml` the `[[tool.uv.index]]` entry `pytorch-cpu` (`https://download.pytorch.org/whl/cpu`, `explicit = true`), `[tool.uv.sources]` mapping `torch` to `pytorch-cpu` with marker `sys_platform != 'darwin'`, `[tool.pytest.ini_options]` (`asyncio_mode = "auto"`, `testpaths = ["tests"]`) and `[tool.ruff]` (`target-version = "py312"`). These are the only hand-written sections; do not touch `dependencies` or `dependency-groups`
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-  - [ ] 2.2 Add dependencies with uv in the planned order
+  - [x] 2.2 Add dependencies with uv in the planned order
     - In `backend/`, run each command from the design's "Backend project setup" section in order: the FastAPI/pydantic group, the LangGraph/LangChain group, `langfuse`, `httpx`, the SQLAlchemy/asyncpg/alembic/pgvector group, `opencv-python-headless pillow numpy torch transformers sentencepiece`, `rapidfuzz`, then `uv add --dev pytest pytest-asyncio respx ruff mypy` and `uv add --group eval pandas matplotlib`
     - Pass no `==` pins; let uv write lower bounds and resolve exact versions in `uv.lock`
     - Run `uv lock --check` and confirm it passes; `backend/uv.lock` is committed
     - _Requirements: 1.6, 1.7, 1.8, 1.9, 1.10_
 
-  - [ ] 2.3 Create the backend package layout
+  - [x] 2.3 Create the backend package layout
     - Create `backend/app/__init__.py`, `backend/app/llm/__init__.py`, `backend/app/db/__init__.py` and `backend/tests/` (empty `__init__.py` files where needed for imports)
     - Run `uv run python -c "import fastapi, langgraph, langchain_groq, langfuse, torch"` to confirm the environment resolves
     - _Requirements: 8.1_
