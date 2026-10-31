@@ -197,7 +197,7 @@ Rules that apply to every task:
     - `App.tsx`: "Screen to Cart" heading and `<HealthStatus />`
     - _Requirements: 12.1, 12.2, 12.3, 12.4_
 
-- [ ] 10. Checkpoint: all automated checks pass
+- [x] 10. Checkpoint: all automated checks pass
   - Backend: `uv run pytest -q`, `uv run ruff check .`, `uv run mypy app`. Extension: `pnpm build`, `pnpm exec tsc --noEmit`. Confirm `git ls-files` lists no `.env` file. Fix anything that fails.
 
 - [ ] 11. Tell the user which variables to set
