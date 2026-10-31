@@ -328,6 +328,80 @@
         "chatSessionId": "sess_1da39622-ce69-4720-be39-5d45d0afed8e",
         "timestamp": 1793420333435
       }
+    ],
+    "8. Docker image and Compose stack": [
+      {
+        "executionId": "bd5bdaa7-ec3e-4f98-b7e5-d79e1ad5c9a7",
+        "chatSessionId": "sess_07b0ef8d-37f1-4799-8e99-8139662a99f5",
+        "timestamp": 1793420366843
+      }
+    ],
+    "9.1 Scaffold the WXT React extension and add packages": [
+      {
+        "executionId": "10e2a418-ea39-4397-93f1-15b991f6215f",
+        "chatSessionId": "sess_e640fbef-e686-404a-842c-a4e45acae134",
+        "timestamp": 1793424290689
+      },
+      {
+        "executionId": "10e2a418-ea39-4397-93f1-15b991f6215f",
+        "chatSessionId": "sess_e640fbef-e686-404a-842c-a4e45acae134",
+        "timestamp": 1793425280579
+      }
+    ],
+    "9.2 Configure the manifest and background script": [
+      {
+        "executionId": "10e2a418-ea39-4397-93f1-15b991f6215f",
+        "chatSessionId": "sess_e640fbef-e686-404a-842c-a4e45acae134",
+        "timestamp": 1793425283479
+      },
+      {
+        "executionId": "10e2a418-ea39-4397-93f1-15b991f6215f",
+        "chatSessionId": "sess_e640fbef-e686-404a-842c-a4e45acae134",
+        "timestamp": 1793425544458
+      }
+    ],
+    "9.3 Generate `extension/lib/api-types.ts`": [
+      {
+        "executionId": "10e2a418-ea39-4397-93f1-15b991f6215f",
+        "chatSessionId": "sess_e640fbef-e686-404a-842c-a4e45acae134",
+        "timestamp": 1793425547105
+      },
+      {
+        "executionId": "10e2a418-ea39-4397-93f1-15b991f6215f",
+        "chatSessionId": "sess_e640fbef-e686-404a-842c-a4e45acae134",
+        "timestamp": 1793425831961
+      }
+    ],
+    "9.4 Implement the typed client in `extension/lib/api.ts`": [
+      {
+        "executionId": "10e2a418-ea39-4397-93f1-15b991f6215f",
+        "chatSessionId": "sess_e640fbef-e686-404a-842c-a4e45acae134",
+        "timestamp": 1793425834541
+      },
+      {
+        "executionId": "10e2a418-ea39-4397-93f1-15b991f6215f",
+        "chatSessionId": "sess_e640fbef-e686-404a-842c-a4e45acae134",
+        "timestamp": 1793425869587
+      }
+    ],
+    "9.5 Build the side panel health check": [
+      {
+        "executionId": "10e2a418-ea39-4397-93f1-15b991f6215f",
+        "chatSessionId": "sess_e640fbef-e686-404a-842c-a4e45acae134",
+        "timestamp": 1793425872113
+      },
+      {
+        "executionId": "10e2a418-ea39-4397-93f1-15b991f6215f",
+        "chatSessionId": "sess_e640fbef-e686-404a-842c-a4e45acae134",
+        "timestamp": 1793425923837
+      }
+    ],
+    "9. Extension": [
+      {
+        "executionId": "10e2a418-ea39-4397-93f1-15b991f6215f",
+        "chatSessionId": "sess_e640fbef-e686-404a-842c-a4e45acae134",
+        "timestamp": 1793425923878
+      }
     ]
   }
 }

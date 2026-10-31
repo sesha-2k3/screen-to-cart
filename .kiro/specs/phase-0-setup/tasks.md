@@ -160,15 +160,15 @@ Rules that apply to every task:
   - Confirm `uv run alembic history` lists `0001` (needs no database)
   - _Requirements: 7.1, 7.2, 7.3, 7.5_
 
-- [ ] 8. Docker image and Compose stack
+- [x] 8. Docker image and Compose stack
   - `backend/.dockerignore`: `.env`, `.venv`, `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`
   - `backend/Dockerfile` as in the design: `python:3.12-slim`, uv from `ghcr.io/astral-sh/uv`, `libglib2.0-0`, `uv sync --frozen --no-dev` (`--no-install-project` first for layer caching), `CMD` runs `alembic upgrade head` then `uvicorn app.main:app --host 0.0.0.0 --port 8000`
   - `docker-compose.yml`: `name: screen-to-cart`; `db` on `pgvector/pgvector:pg16` with `POSTGRES_DB: screen_to_cart`, port 5432, a `pgdata` volume and a `pg_isready` healthcheck; `backend` built from `./backend` with `env_file: [.env]`, `environment.DATABASE_URL` pointing at host `db`, port 8000, `depends_on.db.condition: service_healthy`
   - Run `docker build -t screen-to-cart-backend backend` and confirm it builds
   - _Requirements: 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4, 3.6_
 
-- [ ] 9. Extension
-  - [ ] 9.1 Scaffold the WXT React extension and add packages
+- [x] 9. Extension
+  - [x] 9.1 Scaffold the WXT React extension and add packages
     - From the repo root: `pnpm dlx wxt@latest init extension --template react --pm pnpm`. If the installed WXT rejects these flags, stop and ask the user to run `pnpm dlx wxt@latest init extension` and pick React + pnpm
     - In `extension/package.json`: set `"name": "screen-to-cart-extension"` and add the script `"gen:api": "openapi-typescript http://localhost:8000/openapi.json -o lib/api-types.ts"`
     - In `extension/`: `pnpm add @microsoft/fetch-event-source openapi-fetch` and `pnpm add -D openapi-typescript`
@@ -176,21 +176,21 @@ Rules that apply to every task:
     - Create `extension/.env.example` with only the `WXT_BACKEND_URL=` line and its comment from the design
     - _Requirements: 10.1, 10.2, 10.5, 10.6, 10.7, 11.3, 11.5_
 
-  - [ ] 9.2 Configure the manifest and background script
+  - [x] 9.2 Configure the manifest and background script
     - `wxt.config.ts`: React module, `manifest.name = "Screen to Cart"`, `manifest.description = "Find anything you see in a video, compared across stores."`, `permissions: ["sidePanel"]`
     - `entrypoints/background.ts`: `browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })`
     - _Requirements: 10.3, 10.4, 10.8_
 
-  - [ ] 9.3 Generate `extension/lib/api-types.ts`
+  - [x] 9.3 Generate `extension/lib/api-types.ts`
     - Start `uv run uvicorn app.main:app --port 8000` in `backend/` as a background process, run `pnpm gen:api` in `extension/`, then stop the process. Commit the generated file
     - If the backend can't start in the agent environment, stop and ask the user to run the two commands
     - _Requirements: 11.1, 11.2_
 
-  - [ ] 9.4 Implement the typed client in `extension/lib/api.ts`
+  - [x] 9.4 Implement the typed client in `extension/lib/api.ts`
     - `BACKEND_URL` from `import.meta.env.WXT_BACKEND_URL`, falling back to `http://localhost:8000`; `api = createClient<paths>({ baseUrl: BACKEND_URL })`
     - _Requirements: 11.2, 11.4, 11.5_
 
-  - [ ] 9.5 Build the side panel health check
+  - [x] 9.5 Build the side panel health check
     - `entrypoints/sidepanel/index.html` and `main.tsx` mounting `<App />`
     - `healthStatus.ts` with the `HealthStatus` type and `healthStatusFrom(result)` from the design
     - `HealthStatus.tsx`: shows "Checking backend…", calls `api.GET('/health')` once on mount, then shows `backend OK` or "Backend unreachable at {BACKEND_URL}"

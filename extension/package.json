@@ -1,0 +1,33 @@
+{
+  "name": "screen-to-cart-extension",
+  "description": "Find anything you see in a video, compared across stores.",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "compile": "tsc --noEmit",
+    "gen:api": "openapi-typescript http://localhost:8000/openapi.json -o lib/api-types.ts",
+    "postinstall": "wxt prepare"
+  },
+  "dependencies": {
+    "@microsoft/fetch-event-source": "^2.0.1",
+    "openapi-fetch": "^0.17.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@wxt-dev/module-react": "^1.1.5",
+    "openapi-typescript": "^7.13.0",
+    "typescript": "^5.9.3",
+    "web-ext": "^10.5.0",
+    "wxt": "^0.21.3"
+  }
+}
