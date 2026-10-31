@@ -153,7 +153,7 @@ Rules that apply to every task:
     - `/openapi.json` contains `HealthResponse`
     - _Requirements: 8.2, 8.3, 13.5_
 
-- [ ] 7. Alembic with the pgvector migration
+- [x] 7. Alembic with the pgvector migration
   - In `backend/`: `uv run alembic init -t async app/db/migrations`; keep `alembic.ini` in `backend/` with `script_location = app/db/migrations` and an empty `sqlalchemy.url`
   - `env.py`: async engine from `get_settings().database_url` with `NullPool`; raise `RuntimeError("DATABASE_URL is not set")` when unset; `target_metadata = None`
   - `versions/0001_enable_pgvector.py` (`revision = "0001"`): `CREATE EXTENSION IF NOT EXISTS vector`, and `DROP EXTENSION IF EXISTS vector` on downgrade
