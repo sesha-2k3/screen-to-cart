@@ -200,7 +200,7 @@ Rules that apply to every task:
 - [x] 10. Checkpoint: all automated checks pass
   - Backend: `uv run pytest -q`, `uv run ruff check .`, `uv run mypy app`. Extension: `pnpm build`, `pnpm exec tsc --noEmit`. Confirm `git ls-files` lists no `.env` file. Fix anything that fails.
 
-- [ ] 11. Tell the user which variables to set
+- [x] 11. Tell the user which variables to set
   - Don't open `.env`. Point the user to the README "Setup" table and list what to set after copying `.env.example` to `.env`:
     - `GROQ_API_KEY` (console.groq.com)
     - `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` (the "Screen to Cart" Langfuse project)
