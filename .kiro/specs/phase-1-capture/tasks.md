@@ -6,7 +6,7 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
 
 ## Tasks
 
-- [ ] 1. Spike: capture permission from the hotkey and the side panel button
+- [x] 1. Spike: capture permission from the hotkey and the side panel button
   - Add `activeTab`, `storage` and host `https://www.youtube.com/*` to `wxt.config.ts`; add a `chrome.commands` entry `capture` (suggested key `Alt+Shift+S`)
   - Background: on the command, open the side panel and call `captureVisibleTab` once. Side panel: a "What's this?" button that sends a message to the background, which does the same
   - The user loads the extension and tries both triggers, including after moving to a new video. Record the result in `design.md` section 5; if the button can't capture, it shows the hotkey hint instead

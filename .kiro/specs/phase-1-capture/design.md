@@ -52,4 +52,9 @@ The background writes the finished capture (3 crops + context) to `chrome.storag
 
 Add `activeTab`, `storage` and host permission `https://www.youtube.com/*`. `storage` isn't in the plan's table but `chrome.storage.session` needs it. `scripting` isn't added: content scripts are declared in the manifest, and YouTube tabs that were open before install just need a reload.
 
-Task 1 tests whether a click on the side panel's button grants `activeTab` for `captureVisibleTab`. If it doesn't, the button shows "Press Alt+Shift+S to capture" instead. `<all_urls>` is not added without asking (see the `extension` steering file).
+Result of the task 1 test on macOS Chrome, regular videos and Shorts:
+- The hotkey always captures.
+- A click on the side panel button does not grant `activeTab`. The first click in a tab failed with "Either the '<all_urls>' or 'activeTab' permission is required." Host permission for `youtube.com` alone isn't enough for `captureVisibleTab`.
+- After the hotkey has been used in the tab, the button captures, including after moving to another video or Short. YouTube changes videos without reloading the page, so the `activeTab` grant stays. A full page reload ends it.
+
+So the button stays. When a capture fails, the panel tells the user to press the shortcut, reading its label from `commands.getAll()` (⌥⇧S on macOS, or whatever the user rebound it to). `<all_urls>` is not added without asking (see the `extension` steering file).

@@ -5,6 +5,13 @@ export default defineConfig({
   manifest: {
     name: 'Screen to Cart',
     description: 'Find anything you see in a video, compared across stores.',
-    permissions: ['sidePanel'],
+    permissions: ['sidePanel', 'activeTab', 'storage'],
+    host_permissions: ['https://www.youtube.com/*'],
+    commands: {
+      capture: {
+        suggested_key: { default: 'Alt+Shift+S' },
+        description: 'Find the product on screen',
+      },
+    },
   },
 });
