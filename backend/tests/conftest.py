@@ -87,6 +87,12 @@ def _clean_settings_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     get_settings.cache_clear()
 
 
+@pytest.fixture(autouse=True)
+def _fresh_rate_limit_buckets(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Buckets are process-wide; without this, one test's spending throttles the next.
+    monkeypatch.setattr("app.llm.rate_limit._buckets", {})
+
+
 @pytest.fixture
 def make_settings() -> Callable[..., Settings]:
     """Build Settings from test-provided values only; never opens ``.env``."""

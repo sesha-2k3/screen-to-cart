@@ -60,7 +60,7 @@ JSON mode is turned on in the Groq builder in `factory.py` (`response_format={"t
 
 - Key: SHA-256 of the model spec plus the JSON-serialized messages. The image is part of the hashed input, so a different frame or prompt is a different key. Prompt version and model are covered by the key, which is the plan's eval cache key `(item, prompt_version, model)` in practice.
 - File: `fixtures/llm/<key>.json` with `role`, `model`, `prompt_version` and `content` (the response text). The image is never written.
-- `record` reads before calling, so re-running an unchanged eval costs no tokens. `replay` raises `FixtureMissing` (naming the key and role) on a miss.
+- `record` reads before calling, so re-running an unchanged eval costs no tokens. `replay` raises `FixtureMissingError` (naming the key and role) on a miss.
 
 ### Prompts
 
