@@ -12,7 +12,7 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
   - The user loads the extension and tries both triggers, including after moving to a new video. Record the result in `design.md` section 5; if the button can't capture, it shows the hotkey hint instead
   - _Requirements: 1_
 
-- [ ] 2. Backend frame selection
+- [x] 2. Backend frame selection
   - `IdentifyRequest`, `TranscriptSegment`, `FrameSelected` in `schemas.py`
   - `app/vision/frame_select.py`: `select_sharpest(frames: list[str]) -> FrameSelected` (Laplacian variance, `@observe(capture_input=False)`); raises on undecodable input
   - Test: a sharp and a blurred image, the sharp one wins; an undecodable frame raises
