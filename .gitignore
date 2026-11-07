@@ -5,6 +5,9 @@ extension/.env
 extension/.env.*
 !extension/.env.example
 
+# Eval captures hold video frames; keep them local
+backend/eval/captures/
+
 # Python
 .venv/
 __pycache__/

@@ -59,6 +59,44 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** CandidatesEvent */
+        CandidatesEvent: {
+            /**
+             * Candidates
+             * @description Best first
+             */
+            candidates: components["schemas"]["ProductCandidate"][];
+            /**
+             * Tier
+             * @enum {integer}
+             */
+            tier: 1 | 2;
+        };
+        /** ErrorEvent */
+        ErrorEvent: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "rate_limited" | "upstream_error";
+            /** Message */
+            message: string;
+            /** Retry After Seconds */
+            retry_after_seconds?: number | null;
+        };
+        /** Evidence */
+        Evidence: {
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "visual" | "transcript" | "description";
+            /**
+             * Detail
+             * @description Short quote or observation
+             */
+            detail: string;
+        };
         /** FrameSelected */
         FrameSelected: {
             /** Index */
@@ -101,6 +139,40 @@ export interface components {
             transcript: components["schemas"]["TranscriptSegment"][];
             /** Paid Promotion */
             paid_promotion: boolean;
+        };
+        /** LookupResult */
+        LookupResult: {
+            /**
+             * Candidates
+             * @description Best first
+             */
+            candidates: components["schemas"]["ProductCandidate"][];
+            /** Video Id */
+            video_id: string;
+            /** Bucket */
+            bucket: number;
+        };
+        /** ProductCandidate */
+        ProductCandidate: {
+            /** Brand */
+            brand: string;
+            /** Model */
+            model: string;
+            /** Category */
+            category: string;
+            /** Color */
+            color?: string | null;
+            /** Confidence */
+            confidence: number;
+            /** Evidence */
+            evidence: components["schemas"]["Evidence"][];
+            /** Search Queries */
+            search_queries: string[];
+            /**
+             * Visual Notes
+             * @description Brand text, logos, colors and shape seen in the frame
+             */
+            visual_notes: string;
         };
         /** TranscriptSegment */
         TranscriptSegment: {
@@ -174,7 +246,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["LookupResult"];
                 };
             };
             /** @description No cached result */
@@ -208,13 +280,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description SSE stream. The `frame_selected` event's data is FrameSelected. */
+            /** @description SSE stream. Event `frame_selected` carries FrameSelected, `candidates` carries CandidatesEvent, `error` carries ErrorEvent. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "text/event-stream": components["schemas"]["FrameSelected"];
+                    "text/event-stream": string | components["schemas"]["FrameSelected"] | components["schemas"]["CandidatesEvent"] | components["schemas"]["ErrorEvent"];
                 };
             };
             /** @description Validation Error */
