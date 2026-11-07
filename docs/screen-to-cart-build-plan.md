@@ -408,9 +408,15 @@ SIGLIP_MODEL=google/siglip-base-patch16-224
 
 ## 6. Build phases
 
-Roughly 8–10 weeks solo. Every phase ends with something you can demo.
+Every phase ends with something you can demo.
 
-### Phase 0 — Setup (2–3 days)
+There are no time estimates per phase. Coding speed isn't the limit; these are:
+
+- **Groq's daily quota.** 200K tokens/day is about 50 identify calls. A 50-item eval uses most of a day, and a full 200-item run needs about four days of quota.
+- **Work only you can do.** Checking captures in Chrome (Phase 1), labeling 50 moments (Phase 2) and 200 (Phase 6), and the friend test (Phase 5).
+- **Waiting on others.** eBay production key approval and Chrome Web Store review can each take days.
+
+### Phase 0 — Setup
 
 1. Create the repo with the layout above. Set up the backend with `uv init backend --app --python 3.12 --name screen-to-cart-backend`, add the CPU-only torch index to `pyproject.toml`, then add the packages from section 5.
 2. `docker-compose.yml` with `pgvector/pgvector:pg16` and the backend service.
@@ -425,7 +431,7 @@ Roughly 8–10 weeks solo. Every phase ends with something you can demo.
 
 **Done when:** `docker compose up` brings up DB + API, the side panel shows "backend OK", and a test request shows up as a named trace in Langfuse.
 
-### Phase 1 — Capture (week 1–2)
+### Phase 1 — Capture
 
 1. Content script: detect video ID (regular and Shorts URLs), current time, video element bounding box, title, description, and the "Includes paid promotion" label.
 2. Transcript: read caption tracks from the page's player data and fetch the track from the browser; slice ±30s around the timestamp.
@@ -440,7 +446,7 @@ Roughly 8–10 weeks solo. Every phase ends with something you can demo.
 
 **Done when:** it works on 10 regular videos and 10 Shorts, including one with no captions; no YouTube controls appear in the crops; and capture works from both the hotkey and the side panel button (see the permissions note in section 3).
 
-### Phase 2 — Identify (week 3)
+### Phase 2 — Identify
 
 1. Define `ProductCandidate` in Pydantic: `brand`, `model`, `category`, `color`, `confidence`, `evidence` (`visual` / `transcript` / `description`), `search_queries`, `visual_notes`.
 2. Tier 1 node on `qwen/qwen3.8-27b` with JSON mode, validated against the Pydantic schema. Retry once on invalid JSON.
@@ -452,7 +458,7 @@ Roughly 8–10 weeks solo. Every phase ends with something you can demo.
 
 **Done when:** you have Tier 1 and Tier 1+2 accuracy numbers on the 50-item set.
 
-### Phase 3 — Retrieve (week 4)
+### Phase 3 — Retrieve
 
 1. `retailers/base.py`: `async def search(query: str) -> list[Listing]`, with a common `Listing` schema (title, price, shipping, currency, url, image_url, gtin/upc/mpn when present, seller, condition).
 2. eBay Browse adapter (OAuth client-credentials token, cached until expiry).
@@ -462,7 +468,7 @@ Roughly 8–10 weeks solo. Every phase ends with something you can demo.
 
 **Done when:** a trigger returns raw listings from both retailers in the side panel.
 
-### Phase 4 — Resolve and verify (week 5–6)
+### Phase 4 — Resolve and verify
 
 1. Dedupe: group by GTIN/UPC/MPN; fall back to `rapidfuzz` title similarity + same brand.
 2. SigLIP rerank: embed the video crop and each listing's image; store listing embeddings in pgvector so repeat products are free. Blend image score + text-match score.
@@ -472,7 +478,7 @@ Roughly 8–10 weeks solo. Every phase ends with something you can demo.
 
 **Done when:** top-1 and top-5 exact-match accuracy are measured end to end on the 50-item set.
 
-### Phase 5 — UX and trust (week 7)
+### Phase 5 — UX and trust
 
 1. SSE streaming: `graph.astream(stream_mode="updates")` → event stream → side panel status line ("Found … · checking eBay…").
 2. Product card with grouped listings, cheapest total price highlighted.
@@ -482,7 +488,7 @@ Roughly 8–10 weeks solo. Every phase ends with something you can demo.
 
 **Done when:** a non-technical friend can use it on a video without explanation.
 
-### Phase 6 — Evaluate and ship (week 8–10)
+### Phase 6 — Evaluate and ship
 
 1. Grow the eval set to 200 moments (mix of tech, fashion, home, beauty; regular videos and Shorts).
 2. Eval runner: top-1 / top-5 accuracy, p50 / p95 latency, tokens per query, cache hit rate. Results cached per `(item, prompt_version, model)`.

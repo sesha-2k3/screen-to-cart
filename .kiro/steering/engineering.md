@@ -6,7 +6,7 @@ Screen to Cart is a solo portfolio project. Build the simplest thing that meets 
 - Build only what the current phase needs. No code for later phases, no "in case we need it" options, flags, abstractions or error types.
 - Add an abstraction only when there are two real users of it. One retailer adapter doesn't need a plugin system.
 - Handle errors that can actually happen and that the user would see. Don't add error paths for things the library already handles or that can't happen yet.
-- If a task looks like it needs more than a day, or more than about 200 lines of new code, stop and say so before building it.
+- If a task looks like it needs more than about 200 lines of new code, stop and say so before building it.
 - Prefer the library's defaults. Don't wrap a library just to rename it.
 
 ## Clean code
