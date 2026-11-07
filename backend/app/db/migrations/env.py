@@ -7,14 +7,14 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.config import get_settings
+from app.db.models import Base
 
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# No ORM models yet; Phase 2 points this at Base.metadata for autogenerate.
-target_metadata = None
+target_metadata = Base.metadata
 
 
 def database_url() -> str:
