@@ -1,9 +1,11 @@
 import { api, BACKEND_URL } from '@/lib/api';
+import type { components } from '@/lib/api-types';
 import { CAPTURE_STATE_KEY, type CaptureState, type Trigger } from '@/lib/capture';
 import { sendToContent } from '@/lib/messages';
 import { videoIdFromUrl } from '@/lib/youtube/videoId';
 
 type Tab = Browser.tabs.Tab;
+type LookupResult = components['schemas']['LookupResult'];
 
 const FRAME_OFFSETS_SECONDS = [0, 0.5, 1.0];
 
@@ -46,7 +48,8 @@ async function capture(tab: Tab): Promise<CaptureState> {
     return { status: 'failed', reason: 'not_a_video', message: 'Open a YouTube video or Short first.' };
   }
   const { t } = await sendToContent(tab.id, 'pause', null);
-  if (await isCached(videoId, t)) return { status: 'cached', videoId, t };
+  const cached = await lookup(videoId, t);
+  if (cached) return { status: 'cached', result: cached };
 
   const frames = await captureFrames(tab.id, t);
   const { player, transcript } = await sendToContent(tab.id, 'context', { t });
@@ -65,10 +68,11 @@ async function capture(tab: Tab): Promise<CaptureState> {
   };
 }
 
-async function isCached(videoId: string, t: number): Promise<boolean> {
+// Resolves to undefined on a miss (404).
+async function lookup(videoId: string, t: number): Promise<LookupResult | undefined> {
   try {
-    const { response } = await api.GET('/lookup', { params: { query: { video_id: videoId, t } } });
-    return response.ok;
+    const { data } = await api.GET('/lookup', { params: { query: { video_id: videoId, t } } });
+    return data;
   } catch {
     throw new Error(`Backend unreachable at ${BACKEND_URL}`);
   }

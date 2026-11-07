@@ -1,3 +1,4 @@
+import type { components } from './api-types';
 import type { TranscriptSegment } from './youtube/transcript';
 
 export type Trigger = 'hotkey' | 'button';
@@ -18,7 +19,7 @@ export interface Capture {
 
 export type CaptureState =
   | { status: 'capturing'; trigger: Trigger }
-  | { status: 'cached'; videoId: string; t: number }
+  | { status: 'cached'; result: components['schemas']['LookupResult'] }
   | { status: 'captured'; capture: Capture }
   | { status: 'failed'; reason: FailureReason; message: string };
 

@@ -2,16 +2,23 @@ import { useEffect, useState } from 'react';
 import { identify } from '@/lib/api';
 import type { components } from '@/lib/api-types';
 import type { Capture } from '@/lib/capture';
+import CandidateList from './CandidateList';
 
 type FrameSelected = components['schemas']['FrameSelected'];
+type CandidatesEvent = components['schemas']['CandidatesEvent'];
+type ErrorEvent = components['schemas']['ErrorEvent'];
 
 export default function CaptureResult({ capture }: { capture: Capture }) {
   const [selected, setSelected] = useState<FrameSelected>();
+  const [identified, setIdentified] = useState<CandidatesEvent>();
+  const [streamError, setStreamError] = useState<ErrorEvent>();
   const [error, setError] = useState<string>();
 
   useEffect(() => {
     const controller = new AbortController();
     setSelected(undefined);
+    setIdentified(undefined);
+    setStreamError(undefined);
     setError(undefined);
     identify(
       {
@@ -23,7 +30,7 @@ export default function CaptureResult({ capture }: { capture: Capture }) {
         transcript: capture.transcript,
         paid_promotion: capture.paidPromotion,
       },
-      { onFrameSelected: setSelected },
+      { onFrameSelected: setSelected, onCandidates: setIdentified, onError: setStreamError },
       controller.signal,
     ).catch((reason: unknown) => {
       if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : String(reason));
@@ -33,7 +40,8 @@ export default function CaptureResult({ capture }: { capture: Capture }) {
 
   return (
     <section>
-      <p>{statusLine(selected, error, capture.frames.length)}</p>
+      <p>{statusLine(selected, identified, streamError, error)}</p>
+      {identified && <CandidateList candidates={identified.candidates} />}
       {selected && (
         <img
           src={capture.frames[selected.index]}
@@ -55,10 +63,20 @@ export default function CaptureResult({ capture }: { capture: Capture }) {
   );
 }
 
-function statusLine(selected: FrameSelected | undefined, error: string | undefined, frameCount: number): string {
-  if (error) return `Couldn’t pick a frame: ${error}`;
+function statusLine(
+  selected: FrameSelected | undefined,
+  identified: CandidatesEvent | undefined,
+  streamError: ErrorEvent | undefined,
+  error: string | undefined,
+): string {
+  if (error) return `Couldn’t identify: ${error}`;
+  if (streamError?.code === 'rate_limited') {
+    return `Rate limited. Try again in ${Math.ceil(streamError.retry_after_seconds ?? 60)} seconds.`;
+  }
+  if (streamError) return 'Couldn’t identify the product. Try again.';
   if (!selected) return 'Choosing the sharpest frame…';
-  return `Sharpest of ${frameCount} frames: frame ${selected.index + 1}`;
+  if (!identified) return 'Identifying the product…';
+  return identified.tier === 2 ? 'Double-checked with a second model.' : '';
 }
 
 // The backend expects bare base64, without the "data:image/jpeg;base64," prefix.

@@ -9,9 +9,13 @@ export const api = createClient<paths>({ baseUrl: BACKEND_URL });
 
 type IdentifyRequest = components['schemas']['IdentifyRequest'];
 type FrameSelected = components['schemas']['FrameSelected'];
+type CandidatesEvent = components['schemas']['CandidatesEvent'];
+type ErrorEvent = components['schemas']['ErrorEvent'];
 
 export interface IdentifyHandlers {
   onFrameSelected(frame: FrameSelected): void;
+  onCandidates(event: CandidatesEvent): void;
+  onError(event: ErrorEvent): void;
 }
 
 /** POST /identify and dispatch its SSE events. Resolves when the stream ends. */
@@ -32,6 +36,8 @@ export async function identify(
     },
     onmessage(message) {
       if (message.event === 'frame_selected') handlers.onFrameSelected(JSON.parse(message.data));
+      if (message.event === 'candidates') handlers.onCandidates(JSON.parse(message.data));
+      if (message.event === 'error') handlers.onError(JSON.parse(message.data));
     },
     onerror(error) {
       // Rethrowing stops fetch-event-source from retrying the POST.
