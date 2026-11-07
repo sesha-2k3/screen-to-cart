@@ -27,7 +27,8 @@ from eval.labels import capture_path, read_labels
 from eval.metrics import top1_correct, top3_correct
 
 DEV_SUBSET_SIZE = 50
-MAX_ATTEMPTS = 3
+MAX_ATTEMPTS = 8
+OVERLOADED_WAIT_SECONDS = 15.0
 REPORTS_DIR = Path(__file__).resolve().parent / "reports"
 ITEM_ERRORS = (
     LlmOutputError,
@@ -70,14 +71,17 @@ async def run_item(label: dict[str, Any]) -> ItemResult:
 
 
 async def run_with_retries(label: dict[str, Any]) -> ItemResult:
+    # Several items in a row hit the 8K tokens/minute limit, and Groq sometimes
+    # answers 503 "over capacity"; both pass if we wait.
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:
             return await run_item(label)
-        except RateLimited as error:
+        except (RateLimited, groq.InternalServerError) as error:
             if attempt == MAX_ATTEMPTS:
-                return ItemResult(label, error=str(error))
-            print(f"  rate limited, sleeping {error.retry_after_seconds:.0f}s")
-            await asyncio.sleep(error.retry_after_seconds)
+                return ItemResult(label, error=f"{type(error).__name__}: {error}")
+            wait = getattr(error, "retry_after_seconds", OVERLOADED_WAIT_SECONDS) + 2
+            print(f"  {type(error).__name__}, waiting {wait:.0f}s")
+            await asyncio.sleep(wait)
         except ITEM_ERRORS as error:  # one bad item shouldn't stop the run
             return ItemResult(label, error=f"{type(error).__name__}: {error}")
     raise AssertionError("unreachable")
