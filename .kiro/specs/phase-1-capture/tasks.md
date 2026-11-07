@@ -61,9 +61,13 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
   - Remove the overlay CSS, crop math, capture spacing and the `activeTab` permission
   - _Requirements: 4_
 
-- [ ] 11. Final checkpoint: Phase 1 "Done when" (the user runs this)
+- [x] 11. Final checkpoint: Phase 1 "Done when" (the user runs this)
   - Needs Chrome and real YouTube pages, so the agent gives the checklist and waits for results
   - 10 regular videos and 10 Shorts, at least one without captions and one with paid promotion. For each one, record: hotkey OK, button OK, no YouTube controls or overlays in the frame, transcript shown or "No captions", video paused at `t`
+  - Result: the user checked more videos than this list, and accepted Phase 1 on these. With frames drawn from the video element:
+    - Shared as screenshots: 4 regular videos (Gear Rules, Jeff Nippard, Nissan 300ZX, Sam Sulek) and 2 Shorts. The frames were clean, the transcript, title and description were right, the video stayed paused at `t`, and both triggers worked.
+    - Paid promotion: shown on the 2 labeled videos and absent on the others, including Jeff Nippard and Sam Sulek, which disclose sponsors only in the description (that check is Phase 5).
+    - Not yet seen: "No captions" on a real video. Every video tested had captions, at least auto-generated ones. The code path returns an empty transcript and the panel shows "No captions".
   - On the paid-promotion video, the panel shows it as paid promotion (confirms the `paidContentOverlay` field from design section 1)
 
 ## Notes
