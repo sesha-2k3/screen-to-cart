@@ -30,6 +30,12 @@ def test_is_match_accepts_the_brand_repeated_in_the_model() -> None:
     assert is_match("Apple", "AirPods Pro 2", candidate("Apple", "Apple AirPods Pro 2"))
 
 
+def test_is_match_any_brand_checks_only_the_product() -> None:
+    generic = candidate("Generic", "Stainless Steel Tongue Scraper")
+    assert is_match("any", "Tongue Scraper", generic)
+    assert not is_match("any", "Tongue Scraper", candidate("Generic", "Toothbrush"))
+
+
 def test_is_match_rejects_a_lookalike_model() -> None:
     assert not is_match("Sony", "WH-1000XM5", candidate("Sony", "WH-1000XM4"))
 

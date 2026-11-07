@@ -12,6 +12,10 @@ def normalize(text: str) -> str:
     return re.sub(r"[^a-z0-9]", "", ascii_text.lower())
 
 
+# Label brand for generic products where any brand is right (e.g. "tongue scraper").
+ANY_BRAND = "any"
+
+
 def is_match(brand: str, model: str, candidate: ProductCandidate) -> bool:
     """True when the labeled brand and model both appear in the candidate.
 
@@ -21,9 +25,10 @@ def is_match(brand: str, model: str, candidate: ProductCandidate) -> bool:
     label_brand, label_model = normalize(brand), normalize(model)
     if not label_brand or not label_model:
         return False
-    return label_brand in normalize(candidate.brand) and label_model in normalize(
-        candidate.brand + candidate.model
-    )
+    full_name = normalize(candidate.brand + candidate.model)
+    if label_brand == ANY_BRAND:
+        return label_model in full_name
+    return label_brand in normalize(candidate.brand) and label_model in full_name
 
 
 def top1_correct(brand: str, model: str, candidates: list[ProductCandidate]) -> bool:
