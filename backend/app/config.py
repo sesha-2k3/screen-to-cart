@@ -69,6 +69,10 @@ class Settings(BaseSettings):
     refine_model: str | None = None
     sponsorship_model: str | None = None
     llm_mode: LlmMode = "live"
+    tier2_confidence_threshold: float = 0.7
+    # Groq free-plan tokens per minute; check console.groq.com/settings/limits.
+    groq_tpm_limit: int = 8000
+    save_eval_captures: bool = False
 
     langfuse_public_key: SecretStr | None = None
     langfuse_secret_key: SecretStr | None = None
