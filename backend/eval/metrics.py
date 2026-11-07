@@ -1,12 +1,15 @@
 """Exact-match scoring: brand and model must match after normalizing."""
 
 import re
+import unicodedata
 
 from app.schemas import ProductCandidate
 
 
 def normalize(text: str) -> str:
-    return re.sub(r"[^a-z0-9]", "", text.lower())
+    # NFKD splits "é" into "e" + an accent mark, so "Aimé" and "Aime" match.
+    ascii_text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]", "", ascii_text.lower())
 
 
 def is_match(brand: str, model: str, candidate: ProductCandidate) -> bool:

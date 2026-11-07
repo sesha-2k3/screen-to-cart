@@ -18,6 +18,14 @@ def test_is_match_ignores_case_punctuation_and_extra_words() -> None:
     assert is_match("Sony", "WH-1000XM5", candidate("SONY", "wh1000xm5 Wireless"))
 
 
+def test_is_match_ignores_accents() -> None:
+    assert is_match(
+        "Aimé Leon Dore",
+        "Travel Slipper",
+        candidate("Aime Leon Dore", "Travel Slipper"),
+    )
+
+
 def test_is_match_accepts_the_brand_repeated_in_the_model() -> None:
     assert is_match("Apple", "AirPods Pro 2", candidate("Apple", "Apple AirPods Pro 2"))
 
