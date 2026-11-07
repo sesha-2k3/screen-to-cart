@@ -1,7 +1,6 @@
 import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from pathlib import Path
 from typing import Annotated, Any
 
 import groq
@@ -10,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from langgraph.graph.state import CompiledStateGraph
 from sse_starlette import EventSourceResponse, ServerSentEvent
 
-from app.config import Settings, get_settings
+from app.config import EVAL_CAPTURES_DIR, Settings, get_settings
 from app.db.identify_cache import IdentifyCache, bucket_of
 from app.graph.build import build_graph
 from app.graph.state import PipelineState
@@ -35,9 +34,6 @@ from app.schemas import (
     ProductCandidate,
 )
 from app.vision.frame_select import InvalidFrameError, select_sharpest
-
-# backend/app/main.py -> parents[1] is backend/. Gitignored: it holds video frames.
-EVAL_CAPTURES_DIR = Path(__file__).resolve().parents[1] / "eval" / "captures"
 
 _UPSTREAM_ERRORS = (LlmOutputError, FixtureMissingError, LlmConfigError, groq.APIError)
 

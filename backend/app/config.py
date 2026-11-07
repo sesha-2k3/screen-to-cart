@@ -22,6 +22,8 @@ if TYPE_CHECKING:
 
 # backend/app/config.py -> parents[2] is the repo root.
 REPO_ROOT_ENV = Path(__file__).resolve().parents[2] / ".env"
+# Saved /identify requests for the eval set. Gitignored: they hold video frames.
+EVAL_CAPTURES_DIR = Path(__file__).resolve().parents[1] / "eval" / "captures"
 
 LlmMode = Literal["live", "record", "replay"]
 
