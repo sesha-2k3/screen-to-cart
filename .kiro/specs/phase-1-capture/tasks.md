@@ -40,7 +40,7 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
   - Video ID from `/watch?v=` and `/shorts/<id>`; video element rect; message handlers for pause, seek-and-wait (`seeked` + 2 animation frames), hide/restore overlays, get context (via the bridge)
   - _Requirements: 2, 4, 5_
 
-- [ ] 7. Background capture flow
+- [x] 7. Background capture flow
   - On trigger: pause and read `t` → `GET /lookup` (404 = miss) → for offsets 0, 0.5, 1.0 (clamped at 0): seek, capture, keep ≥500 ms between captures → restore controls and `currentTime = t` in `finally` → gather context and transcript
   - Crop each capture with `OffscreenCanvas` (scale `bitmap.width / innerWidth`, rect clamped), encode JPEG 0.85
   - Write `{ crops, context }` to `chrome.storage.session`
