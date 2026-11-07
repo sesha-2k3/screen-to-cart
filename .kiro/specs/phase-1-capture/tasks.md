@@ -30,7 +30,7 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
   - `CustomEvent` request/response bridge to the isolated script
   - _Requirements: 5_
 
-- [ ] 5. Transcript
+- [x] 5. Transcript
   - Fallback chain from `design.md` section 1: stored response → direct `fmt=json3` fetch → subtitles on/off through the player API with a 3 s timeout → empty
   - Parse json3 `events` into `{start, duration, text}` and keep segments within ±30 s of `t`
   - _Requirements: 5_

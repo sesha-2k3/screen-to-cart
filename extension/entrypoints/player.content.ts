@@ -1,5 +1,6 @@
 import { servePageRequests } from '@/lib/youtube/bridge';
 import { captureCaptionResponses } from '@/lib/youtube/captionCapture';
+import { loadTranscript } from '@/lib/youtube/loadTranscript';
 import { findPlayer, readPlayerData } from '@/lib/youtube/playerData';
 
 export default defineContentScript({
@@ -14,7 +15,7 @@ export default defineContentScript({
         const player = findPlayer();
         return player ? readPlayerData(player) : null;
       },
-      transcript: async () => [],
+      transcript: ({ t }) => loadTranscript(t),
     });
   },
 });

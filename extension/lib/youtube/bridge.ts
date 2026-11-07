@@ -1,10 +1,8 @@
 // The isolated content script can't see the page's JS objects, so it asks the
 // MAIN-world script through window events. Payloads are JSON strings because
 // object details don't reliably cross the world boundary.
-import type { components } from '@/lib/api-types';
 import type { PlayerData } from './playerData';
-
-type TranscriptSegment = components['schemas']['TranscriptSegment'];
+import type { TranscriptSegment } from './transcript';
 
 interface PageRequests {
   playerData: { params: null; result: PlayerData | null };
