@@ -7,6 +7,8 @@ extension/.env.*
 
 # Eval captures hold video frames; keep them local
 backend/eval/captures/
+# Recorded LLM responses for LLM_MODE=record/replay; kept local
+fixtures/llm/
 
 # Python
 .venv/
