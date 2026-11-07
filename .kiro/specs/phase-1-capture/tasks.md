@@ -51,7 +51,7 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
   - _Requirements: 7_
 
 - [ ] 9. Checkpoint: automated checks
-  - `uv run pytest -q`, `uv run ruff check .`, `uv run mypy app` in `backend/`; `pnpm compile` and `pnpm build` in `extension/`
+  - `uv run pytest -q`, `uv run ruff check .`, `uv run mypy app` in `backend/`; `pnpm compile`, `pnpm test` and `pnpm build` in `extension/`
 
 - [ ] 10. Final checkpoint: Phase 1 "Done when" (the user runs this)
   - Needs Chrome and real YouTube pages, so the agent gives the checklist and waits for results
@@ -60,4 +60,4 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
 ## Notes
 
 - Tests never call live services; frames in tests are generated with NumPy/OpenCV, not stored fixtures.
-- The extension has no test runner. Video ID parsing, json3 parsing with the ±30 s slice, and crop math are pure functions; if Vitest is added, those are the ones to test.
+- The extension uses Vitest (`pnpm test`, with WXT's `WxtVitest` plugin). Only pure functions get tests: video ID parsing (task 6), json3 parsing with the ±30 s slice (task 5) and crop math (task 7). Test files sit next to the code as `*.test.ts`.
