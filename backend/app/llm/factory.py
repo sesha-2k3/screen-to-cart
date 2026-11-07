@@ -4,8 +4,7 @@ Every pipeline node gets its chat model from ``get_llm(role)``. The role's model
 spec (``provider:model``) comes from Settings, so switching models or providers is
 a configuration change. This module holds no model names.
 
-``LLM_MODE`` is validated by Settings but ignored here in Phase 0; record/replay
-wrapping arrives in Phase 2.
+``LLM_MODE`` (record/replay) is handled by ``app.llm.invoke``, not here.
 """
 
 from __future__ import annotations
@@ -13,9 +12,11 @@ from __future__ import annotations
 from collections.abc import Callable
 from enum import StrEnum
 
+import httpx
 from langchain_core.language_models.chat_models import BaseChatModel
 
 from app.config import Settings, get_settings
+from app.llm.rate_limit import bucket_for
 
 
 class Role(StrEnum):
@@ -77,7 +78,29 @@ def _build_groq(model: str, role: Role, settings: Settings) -> BaseChatModel:
     if settings.groq_api_key is None:
         raise LlmConfigError(f"GROQ_API_KEY is not set (role={role.value})")
     # Construction sends no request; the instance is returned as is.
-    return ChatGroq(model=model, api_key=settings.groq_api_key)
+    return ChatGroq(
+        model=model,
+        api_key=settings.groq_api_key,
+        http_async_client=_groq_http_client(f"groq:{model}", settings),
+        # The SDK would retry 429s for up to a minute while the panel looks frozen.
+        max_retries=0,
+        # Every role returns JSON; the prompt carries the shape, so this stays portable.
+        model_kwargs={"response_format": {"type": "json_object"}},
+    )
+
+
+_http_clients: dict[str, httpx.AsyncClient] = {}
+
+
+def _groq_http_client(model_spec: str, settings: Settings) -> httpx.AsyncClient:
+    # One client per model, shared across requests. ChatGroq doesn't expose response
+    # headers, so the rate limiter reads them through this client's response hook.
+    if model_spec not in _http_clients:
+        bucket = bucket_for(model_spec, settings.groq_tpm_limit)
+        _http_clients[model_spec] = httpx.AsyncClient(
+            event_hooks={"response": [bucket.observe]}
+        )
+    return _http_clients[model_spec]
 
 
 def _build_anthropic(model: str, role: Role, settings: Settings) -> BaseChatModel:
