@@ -46,7 +46,7 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
   - Write `{ crops, context }` to `chrome.storage.session`
   - _Requirements: 2, 3, 4_
 
-- [ ] 8. Side panel
+- [x] 8. Side panel
   - Read the capture from `chrome.storage.session` on mount and on change; `POST /identify` through `lib/api.ts` with `@microsoft/fetch-event-source`
   - Show the status line, the chosen crop, title, paid-promo flag, transcript snippet (or "No captions") and the raw description. One component per file; keep `HealthStatus`
   - _Requirements: 7_
