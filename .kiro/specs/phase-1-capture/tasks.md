@@ -18,7 +18,7 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
   - Test: a sharp and a blurred image, the sharp one wins; an undecodable frame raises
   - _Requirements: 6_
 
-- [ ] 3. Backend endpoints
+- [x] 3. Backend endpoints
   - `GET /lookup` returns 404; `POST /identify` returns an `EventSourceResponse` with one `frame_selected` event, inside `trace_attributes("identify", session_id=video_id)`; 422 on a bad frame
   - List `FrameSelected` in the route's `responses` so it appears in OpenAPI; regenerate `extension/lib/api-types.ts`
   - Test: posting two frames streams `frame_selected` with the sharp frame's index

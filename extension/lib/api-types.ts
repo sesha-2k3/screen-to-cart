@@ -21,10 +21,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lookup */
+        get: operations["lookup_lookup_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/identify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Identify */
+        post: operations["identify_identify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** FrameSelected */
+        FrameSelected: {
+            /** Index */
+            index: number;
+            /** Sharpness */
+            sharpness: number;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
         /** HealthResponse */
         HealthResponse: {
             /**
@@ -32,6 +78,54 @@ export interface components {
              * @constant
              */
             status: "ok";
+        };
+        /** IdentifyRequest */
+        IdentifyRequest: {
+            /** Video Id */
+            video_id: string;
+            /**
+             * T
+             * @description Seconds into the video when the user asked
+             */
+            t: number;
+            /**
+             * Frames
+             * @description Base64 JPEG crops, without a data: URL prefix
+             */
+            frames: string[];
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /** Transcript */
+            transcript: components["schemas"]["TranscriptSegment"][];
+            /** Paid Promotion */
+            paid_promotion: boolean;
+        };
+        /** TranscriptSegment */
+        TranscriptSegment: {
+            /**
+             * Start
+             * @description Seconds from the start of the video
+             */
+            start: number;
+            /** Duration */
+            duration: number;
+            /** Text */
+            text: string;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+            /** Input */
+            input?: unknown;
+            /** Context */
+            ctx?: Record<string, never>;
         };
     };
     responses: never;
@@ -58,6 +152,78 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    lookup_lookup_get: {
+        parameters: {
+            query: {
+                video_id: string;
+                t: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description No cached result */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    identify_identify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IdentifyRequest"];
+            };
+        };
+        responses: {
+            /** @description SSE stream. The `frame_selected` event's data is FrameSelected. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": components["schemas"]["FrameSelected"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
