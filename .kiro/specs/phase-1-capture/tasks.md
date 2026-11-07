@@ -51,7 +51,7 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
   - Show the status line, the chosen crop, title, paid-promo flag, transcript snippet (or "No captions") and the raw description. One component per file; keep `HealthStatus`
   - _Requirements: 7_
 
-- [ ] 9. Checkpoint: automated checks
+- [x] 9. Checkpoint: automated checks
   - `uv run pytest -q`, `uv run ruff check .`, `uv run mypy app` in `backend/`; `pnpm compile`, `pnpm test` and `pnpm build` in `extension/`
 
 - [ ] 10. Final checkpoint: Phase 1 "Done when" (the user runs this)
