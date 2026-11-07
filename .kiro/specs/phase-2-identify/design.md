@@ -28,8 +28,8 @@ POST /identify
 | `app/llm/invoke.py` | `invoke_json(role, messages, schema, config)`: rate limit, record/replay, call, validate, retry once |
 | `app/llm/rate_limit.py` | Per-model token bucket |
 | `app/llm/fixtures.py` | Record/replay storage |
-| `app/db/models.py`, `session.py`, `identify_cache.py` | ORM model, async engine, get/put |
-| `eval/run.py`, `eval/metrics.py` | Runner and exact-match scoring |
+| `app/db/models.py`, `identify_cache.py` | ORM model; `IdentifyCache` owns the async engine and does get/put |
+| `eval/run.py`, `eval/metrics.py`, `eval/stub_labels.py`, `eval/labels.py` | Runner, exact-match scoring, label stubs, shared paths |
 
 The graph is retrieve-ready: Phase 3 adds the retailer fan-out after `needs_tier2`'s two branches meet.
 
@@ -79,7 +79,7 @@ JSON mode is turned on in the Groq builder in `factory.py` (`response_format={"t
 Table `identify_cache`: `video_id` (text), `bucket` (int, `floor(t / 5)`), `result` (JSONB, a `Candidates`), `created_at`. Primary key `(video_id, bucket)`; a write for an existing key replaces it. Migration `0002`; `env.py` points at `Base.metadata`.
 
 - `/lookup` and `/identify` get an `IdentifyCache` through a FastAPI dependency, so tests swap in an in-memory one.
-- Database errors are logged and treated as a miss (lookup) or skipped (write). The extension must never fail because Postgres isn't running.
+- Database errors are logged and treated as a miss (lookup) or skipped (write). The extension must never fail because Postgres isn't running. The connect timeout is 2 s instead of asyncpg's 60 s, because `/lookup` runs before every capture.
 - Only the final candidates are cached. A stream that ended in an error isn't cached.
 
 ### Eval
