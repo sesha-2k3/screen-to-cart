@@ -19,7 +19,7 @@ Alternatives considered:
 - Scraping the "Show transcript" panel: Shorts don't show it, and it means clicking through the page UI.
 - Fetching on the backend with yt-dlp: breaks the "transcript is fetched in the browser" rule, and YouTube blocks datacenter IPs.
 
-The same MAIN-world script reads the player response (`movie_player.getPlayerResponse()`, or `#shorts-player` on Shorts) for the title, `shortDescription`, caption tracks and the paid-content overlay. This works on Shorts, where the description isn't in the DOM, and stays current after YouTube's in-page navigation. Task 4 confirms the exact paid-promo field on a real sponsored video.
+The same MAIN-world script reads the player response (`movie_player.getPlayerResponse()`, or `#shorts-player` on Shorts) for the title, `shortDescription`, caption tracks and the paid-content overlay. This works on Shorts, where the description isn't in the DOM, and stays current after YouTube's in-page navigation. The paid-promo flag is read from `paidContentOverlay` in the player response; task 10 confirms it on a real sponsored video.
 
 The isolated content script and the MAIN-world script talk through `window` `CustomEvent`s (request/response with a request ID).
 
@@ -27,7 +27,7 @@ The isolated content script and the MAIN-world script talk through `window` `Cus
 
 | Step | Runs in | Why |
 |---|---|---|
-| Video ID, rect, pause/seek, hide/restore controls | Isolated content script | DOM access; selectors live in `entrypoints/content/selectors.ts` |
+| Video ID, rect, pause/seek, hide/restore controls | Isolated content script | DOM access; selectors live in `lib/youtube/selectors.ts`, shared by both content scripts |
 | Player data, transcript | MAIN-world content script | Needs page JS objects and the player's network calls |
 | `GET /lookup`, `captureVisibleTab`, crop | Background service worker | Only the background can capture; `OffscreenCanvas` works there |
 | `POST /identify` (SSE) | Side panel | `@microsoft/fetch-event-source` calls `window.setTimeout` and `document`, which don't exist in a service worker |

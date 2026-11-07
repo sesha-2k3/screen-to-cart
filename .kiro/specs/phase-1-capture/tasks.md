@@ -24,11 +24,10 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
   - Test: posting two frames streams `frame_selected` with the sharp frame's index
   - _Requirements: 3, 6_
 
-- [ ] 4. MAIN-world player script
+- [x] 4. MAIN-world player script
   - `entrypoints/player.content.ts` (`world: 'MAIN'`, `document_start`): read the player response (title, `shortDescription`, caption tracks, paid-promo flag) for watch and Shorts players
   - Wrap `fetch`/XHR to store copies of `/api/timedtext` responses by video ID
   - `CustomEvent` request/response bridge to the isolated script
-  - Check the paid-promo field on one sponsored video and note it in `design.md`
   - _Requirements: 5_
 
 - [ ] 5. Transcript
@@ -37,7 +36,7 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
   - _Requirements: 5_
 
 - [ ] 6. Isolated content script
-  - `entrypoints/content/selectors.ts` with every YouTube selector; `entrypoints/content/index.ts`
+  - Every YouTube selector in `lib/youtube/selectors.ts`; `entrypoints/content/index.ts`
   - Video ID from `/watch?v=` and `/shorts/<id>`; video element rect; message handlers for pause, seek-and-wait (`seeked` + 2 animation frames), hide/restore overlays, get context (via the bridge)
   - _Requirements: 2, 4, 5_
 
@@ -58,6 +57,7 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
 - [ ] 10. Final checkpoint: Phase 1 "Done when" (the user runs this)
   - Needs Chrome and real YouTube pages, so the agent gives the checklist and waits for results
   - 10 regular videos and 10 Shorts, at least one without captions and one with paid promotion. For each one, record: hotkey OK, button OK, no controls in the crop, transcript shown or "No captions", video paused at `t`
+  - On the paid-promotion video, the panel shows it as paid promotion (confirms the `paidContentOverlay` field from design section 1)
 
 ## Notes
 
