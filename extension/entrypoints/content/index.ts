@@ -1,6 +1,6 @@
 import { serveContentRequests, type VideoRect } from '@/lib/messages';
 import { requestFromPage } from '@/lib/youtube/bridge';
-import { OVERLAY_SELECTORS, VIDEO_SELECTOR } from '@/lib/youtube/selectors';
+import { AD_SHOWING_SELECTOR, OVERLAY_SELECTORS, VIDEO_SELECTOR } from '@/lib/youtube/selectors';
 
 const CAPTURING_CLASS = 'screen-to-cart-capturing';
 const SEEK_TIMEOUT_MS = 2000;
@@ -11,6 +11,9 @@ export default defineContentScript({
     injectCaptureStyle();
     serveContentRequests({
       pause: async () => {
+        if (document.querySelector(AD_SHOWING_SELECTOR)) {
+          throw new Error('An ad is playing. Wait for it to finish, then try again.');
+        }
         const video = findVideo();
         video.pause();
         return { t: video.currentTime };

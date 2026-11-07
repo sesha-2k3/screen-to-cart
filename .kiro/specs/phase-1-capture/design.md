@@ -19,7 +19,9 @@ Alternatives considered:
 - Scraping the "Show transcript" panel: Shorts don't show it, and it means clicking through the page UI.
 - Fetching on the backend with yt-dlp: breaks the "transcript is fetched in the browser" rule, and YouTube blocks datacenter IPs.
 
-The same MAIN-world script reads the player response (`movie_player.getPlayerResponse()`, or `#shorts-player` on Shorts) for the title, `shortDescription`, caption tracks and the paid-content overlay. This works on Shorts, where the description isn't in the DOM, and stays current after YouTube's in-page navigation. The paid-promo flag is read from `paidContentOverlay` in the player response; task 10 confirms it on a real sponsored video.
+The same MAIN-world script reads the player response (`movie_player.getPlayerResponse()`, or `#shorts-player` on Shorts) for the title, `shortDescription`, caption tracks and the paid-content overlay. This works on Shorts, where the description isn't in the DOM, and stays current after YouTube's in-page navigation. The paid-promo flag is read from `paidContentOverlay` in the player response. This was confirmed on a video showing the "Includes paid promotion" banner, and on several videos without it.
+
+If an ad is playing (the player has the `ad-showing` class), the capture stops and asks the user to wait, because the screenshot would show the ad instead of the video.
 
 The isolated content script and the MAIN-world script talk through `window` `CustomEvent`s (request/response with a request ID).
 

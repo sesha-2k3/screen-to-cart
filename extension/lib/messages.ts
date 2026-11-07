@@ -44,7 +44,8 @@ export function serveContentRequests(handlers: {
     if (!handler) return;
     handler(params).then(
       (value) => sendResponse({ ok: true, value } satisfies Reply),
-      (error) => sendResponse({ ok: false, error: String(error) } satisfies Reply),
+      (error) =>
+        sendResponse({ ok: false, error: error instanceof Error ? error.message : String(error) } satisfies Reply),
     );
     return true;
   });
