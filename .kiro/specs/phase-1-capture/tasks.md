@@ -10,46 +10,46 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
   - Add `activeTab`, `storage` and host `https://www.youtube.com/*` to `wxt.config.ts`; add a `chrome.commands` entry `capture` (suggested key `Alt+Shift+S`)
   - Background: on the command, open the side panel and call `captureVisibleTab` once. Side panel: a "What's this?" button that sends a message to the background, which does the same
   - The user loads the extension and tries both triggers, including after moving to a new video. Record the result in `design.md` section 5; if the button can't capture, it shows the hotkey hint instead
-  - _Requirements: 1_
+  - _Requirements: 1.1, 1.2_
 
 - [x] 2. Backend frame selection
   - `IdentifyRequest`, `TranscriptSegment`, `FrameSelected` in `schemas.py`
   - `app/vision/frame_select.py`: `select_sharpest(frames: list[str]) -> FrameSelected` (Laplacian variance, `@observe(capture_input=False)`); raises on undecodable input
   - Test: a sharp and a blurred image, the sharp one wins; an undecodable frame raises
-  - _Requirements: 6_
+  - _Requirements: 6.1, 6.2, 6.3_
 
 - [x] 3. Backend endpoints
   - `GET /lookup` returns 404; `POST /identify` returns an `EventSourceResponse` with one `frame_selected` event, inside `trace_attributes("identify", session_id=video_id)`; 422 on a bad frame
   - List `FrameSelected` in the route's `responses` so it appears in OpenAPI; regenerate `extension/lib/api-types.ts`
   - Test: posting two frames streams `frame_selected` with the sharp frame's index
-  - _Requirements: 3, 6_
+  - _Requirements: 3.2, 6.1, 6.2_
 
 - [x] 4. MAIN-world player script
   - `entrypoints/player.content.ts` (`world: 'MAIN'`, `document_start`): read the player response (title, `shortDescription`, caption tracks, paid-promo flag) for watch and Shorts players
   - Wrap `fetch`/XHR to store copies of `/api/timedtext` responses by video ID
   - `CustomEvent` request/response bridge to the isolated script
-  - _Requirements: 5_
+  - _Requirements: 5.2_
 
 - [x] 5. Transcript
   - Fallback chain from `design.md` section 1: stored response → direct `fmt=json3` fetch → subtitles on/off through the player API with a 3 s timeout → empty
   - Parse json3 `events` into `{start, duration, text}` and keep segments within ±30 s of `t`
-  - _Requirements: 5_
+  - _Requirements: 5.2, 5.3_
 
 - [x] 6. Isolated content script
   - Every YouTube selector in `lib/youtube/selectors.ts`; `entrypoints/content/index.ts`
   - Video ID from `/watch?v=` and `/shorts/<id>`; video element rect; message handlers for pause, seek-and-wait (`seeked` + 2 animation frames), hide/restore overlays, get context (via the bridge)
-  - _Requirements: 2, 4, 5_
+  - _Requirements: 2.1, 4.1, 5.1_
 
 - [x] 7. Background capture flow
   - On trigger: pause and read `t` → `GET /lookup` (404 = miss) → for offsets 0, 0.5, 1.0 (clamped at 0): seek, capture, keep ≥500 ms between captures → restore controls and `currentTime = t` in `finally` → gather context and transcript
   - Crop each capture with `OffscreenCanvas` (scale `bitmap.width / innerWidth`, rect clamped), encode JPEG 0.85
   - Write `{ crops, context }` to `chrome.storage.session`
-  - _Requirements: 2, 3, 4_
+  - _Requirements: 2.2, 3.1, 3.3, 4.1, 4.3_
 
 - [x] 8. Side panel
   - Read the capture from `chrome.storage.session` on mount and on change; `POST /identify` through `lib/api.ts` with `@microsoft/fetch-event-source`
   - Show the status line, the chosen crop, title, paid-promo flag, transcript snippet (or "No captions") and the raw description. One component per file; keep `HealthStatus`
-  - _Requirements: 7_
+  - _Requirements: 5.3, 7.1_
 
 - [x] 9. Checkpoint: automated checks
   - `uv run pytest -q`, `uv run ruff check .`, `uv run mypy app` in `backend/`; `pnpm compile`, `pnpm test` and `pnpm build` in `extension/`
@@ -59,7 +59,7 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
   - Stop the capture while an ad plays (`ad-showing` on the player)
   - `lib/youtube/frame.ts`: draw the `<video>` onto a canvas, long edge ≤ 1280 px, JPEG 0.85; test the size cap
   - Remove the overlay CSS, crop math, capture spacing and the `activeTab` permission
-  - _Requirements: 4_
+  - _Requirements: 4.2, 4.3, 4.4_
 
 - [x] 11. Final checkpoint: Phase 1 "Done when" (the user runs this)
   - Needs Chrome and real YouTube pages, so the agent gives the checklist and waits for results
