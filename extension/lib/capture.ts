@@ -3,13 +3,13 @@ import type { TranscriptSegment } from './youtube/transcript';
 export type Trigger = 'hotkey' | 'button';
 
 // Why a capture failed, so the side panel can show the right message.
-export type FailureReason = 'needs_shortcut' | 'not_a_video' | 'reload_tab' | 'other';
+export type FailureReason = 'not_a_video' | 'reload_tab' | 'other';
 
 export interface Capture {
   id: string;
   videoId: string;
   t: number;
-  crops: string[]; // JPEG data URLs, in order t, t−0.5s, t−1.0s
+  frames: string[]; // JPEG data URLs, in order t, t−0.5s, t−1.0s
   title: string;
   description: string;
   paidPromotion: boolean;

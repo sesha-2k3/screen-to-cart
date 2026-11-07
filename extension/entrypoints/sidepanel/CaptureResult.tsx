@@ -17,7 +17,7 @@ export default function CaptureResult({ capture }: { capture: Capture }) {
       {
         video_id: capture.videoId,
         t: capture.t,
-        frames: capture.crops.map(withoutDataUrlPrefix),
+        frames: capture.frames.map(withoutDataUrlPrefix),
         title: capture.title,
         description: capture.description,
         transcript: capture.transcript,
@@ -33,10 +33,10 @@ export default function CaptureResult({ capture }: { capture: Capture }) {
 
   return (
     <section>
-      <p>{statusLine(selected, error, capture.crops.length)}</p>
+      <p>{statusLine(selected, error, capture.frames.length)}</p>
       {selected && (
         <img
-          src={capture.crops[selected.index]}
+          src={capture.frames[selected.index]}
           alt="Chosen frame"
           style={{ width: '100%', borderRadius: 4 }}
         />

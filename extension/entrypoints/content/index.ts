@@ -1,14 +1,13 @@
-import { serveContentRequests, type VideoRect } from '@/lib/messages';
+import { serveContentRequests } from '@/lib/messages';
 import { requestFromPage } from '@/lib/youtube/bridge';
-import { AD_SHOWING_SELECTOR, OVERLAY_SELECTORS, VIDEO_SELECTOR } from '@/lib/youtube/selectors';
+import { drawFrame } from '@/lib/youtube/frame';
+import { AD_SHOWING_SELECTOR, VIDEO_SELECTOR } from '@/lib/youtube/selectors';
 
-const CAPTURING_CLASS = 'screen-to-cart-capturing';
 const SEEK_TIMEOUT_MS = 2000;
 
 export default defineContentScript({
   matches: ['https://www.youtube.com/*'],
   main() {
-    injectCaptureStyle();
     serveContentRequests({
       pause: async () => {
         if (document.querySelector(AD_SHOWING_SELECTOR)) {
@@ -18,19 +17,12 @@ export default defineContentScript({
         video.pause();
         return { t: video.currentTime };
       },
-      seek: async ({ time }) => {
+      frameAt: async ({ time }) => {
         const video = findVideo();
         await seekTo(video, time);
-        await nextPaint();
-        return rectOf(video);
-      },
-      hideOverlays: async () => {
-        document.documentElement.classList.add(CAPTURING_CLASS);
-        await nextPaint();
-        return null;
+        return drawFrame(video);
       },
       restore: async ({ time }) => {
-        document.documentElement.classList.remove(CAPTURING_CLASS);
         const video = findVideo();
         video.currentTime = time;
         video.pause();
@@ -43,13 +35,6 @@ export default defineContentScript({
     });
   },
 });
-
-function injectCaptureStyle(): void {
-  const style = document.createElement('style');
-  const hidden = OVERLAY_SELECTORS.map((selector) => `html.${CAPTURING_CLASS} ${selector}`).join(',\n');
-  style.textContent = `${hidden} { visibility: hidden !important; transition: none !important; }`;
-  document.head.append(style);
-}
 
 function findVideo(): HTMLVideoElement {
   const selector = location.pathname.startsWith('/shorts/') ? VIDEO_SELECTOR.shorts : VIDEO_SELECTOR.watch;
@@ -70,14 +55,4 @@ function seekTo(video: HTMLVideoElement, time: number): Promise<void> {
     video.addEventListener('seeked', done);
     video.currentTime = time;
   });
-}
-
-// Two animation frames: one for the style or frame change, one for it to be painted.
-function nextPaint(): Promise<void> {
-  return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-}
-
-function rectOf(video: HTMLVideoElement): VideoRect {
-  const { left, top, width, height } = video.getBoundingClientRect();
-  return { left, top, width, height, viewportWidth: window.innerWidth, viewportHeight: window.innerHeight };
 }

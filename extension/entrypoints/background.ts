@@ -1,18 +1,13 @@
 import { api, BACKEND_URL } from '@/lib/api';
 import { CAPTURE_STATE_KEY, type CaptureState, type Trigger } from '@/lib/capture';
-import { cropScreenshot } from '@/lib/crop';
 import { sendToContent } from '@/lib/messages';
 import { videoIdFromUrl } from '@/lib/youtube/videoId';
 
 type Tab = Browser.tabs.Tab;
 
 const FRAME_OFFSETS_SECONDS = [0, 0.5, 1.0];
-// Chrome allows about 2 captureVisibleTab calls per second.
-const MIN_CAPTURE_GAP_MS = 500;
-const SCREENSHOT_JPEG_QUALITY = 95;
 
 let capturing = false;
-let lastCaptureAt = 0;
 
 export default defineBackground(() => {
   browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
@@ -53,7 +48,7 @@ async function capture(tab: Tab): Promise<CaptureState> {
   const { t } = await sendToContent(tab.id, 'pause', null);
   if (await isCached(videoId, t)) return { status: 'cached', videoId, t };
 
-  const crops = await captureFrames(tab.id, tab.windowId, t);
+  const frames = await captureFrames(tab.id, t);
   const { player, transcript } = await sendToContent(tab.id, 'context', { t });
   return {
     status: 'captured',
@@ -61,7 +56,7 @@ async function capture(tab: Tab): Promise<CaptureState> {
       id: crypto.randomUUID(),
       videoId,
       t,
-      crops,
+      frames,
       title: player?.title ?? tab.title ?? '',
       description: player?.description ?? '',
       paidPromotion: player?.paidPromotion ?? false,
@@ -79,30 +74,20 @@ async function isCached(videoId: string, t: number): Promise<boolean> {
   }
 }
 
-// captureVisibleTab only sees what's on screen now, so earlier frames come from seeking back.
-async function captureFrames(tabId: number, windowId: number, t: number): Promise<string[]> {
-  const crops: string[] = [];
-  await sendToContent(tabId, 'hideOverlays', null);
+async function captureFrames(tabId: number, t: number): Promise<string[]> {
+  const frames: string[] = [];
   try {
     for (const offset of FRAME_OFFSETS_SECONDS) {
-      const rect = await sendToContent(tabId, 'seek', { time: Math.max(0, t - offset) });
-      await sleep(lastCaptureAt + MIN_CAPTURE_GAP_MS - Date.now());
-      lastCaptureAt = Date.now();
-      const screenshot = await browser.tabs.captureVisibleTab(windowId, {
-        format: 'jpeg',
-        quality: SCREENSHOT_JPEG_QUALITY,
-      });
-      crops.push(await cropScreenshot(screenshot, rect));
+      frames.push(await sendToContent(tabId, 'frameAt', { time: Math.max(0, t - offset) }));
     }
   } finally {
     await sendToContent(tabId, 'restore', { time: t });
   }
-  return crops;
+  return frames;
 }
 
 function failure(error: unknown): CaptureState {
   const message = error instanceof Error ? error.message : String(error);
-  if (message.includes('activeTab')) return { status: 'failed', reason: 'needs_shortcut', message };
   // The content script isn't in tabs that were open before the extension was installed or reloaded.
   if (message.includes('Receiving end does not exist')) return { status: 'failed', reason: 'reload_tab', message };
   return { status: 'failed', reason: 'other', message };
@@ -110,8 +95,4 @@ function failure(error: unknown): CaptureState {
 
 function setState(state: CaptureState): Promise<void> {
   return browser.storage.session.set({ [CAPTURE_STATE_KEY]: state });
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, Math.max(0, ms)));
 }

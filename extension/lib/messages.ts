@@ -4,19 +4,9 @@
 import type { PlayerData } from './youtube/playerData';
 import type { TranscriptSegment } from './youtube/transcript';
 
-export interface VideoRect {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-  viewportWidth: number;
-  viewportHeight: number;
-}
-
 interface ContentRequests {
   pause: { params: null; result: { t: number } };
-  seek: { params: { time: number }; result: VideoRect };
-  hideOverlays: { params: null; result: null };
+  frameAt: { params: { time: number }; result: string };
   restore: { params: { time: number }; result: null };
   context: { params: { t: number }; result: { player: PlayerData | null; transcript: TranscriptSegment[] } };
 }

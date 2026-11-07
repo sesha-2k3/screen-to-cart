@@ -5,7 +5,7 @@ export default defineConfig({
   manifest: {
     name: 'Screen to Cart',
     description: 'Find anything you see in a video, compared across stores.',
-    permissions: ['sidePanel', 'activeTab', 'storage'],
+    permissions: ['sidePanel', 'storage'],
     host_permissions: ['https://www.youtube.com/*'],
     commands: {
       capture: {

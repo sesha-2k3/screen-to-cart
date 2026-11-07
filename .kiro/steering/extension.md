@@ -8,13 +8,14 @@ fileMatchPattern: "extension/**/*"
 ## Capture rules (these come from real browser constraints)
 - Capture only on an explicit user action (hotkey via `chrome.commands`, or the side panel's "What's this?" button).
 - On trigger: record `t`, pause the video, call `GET /lookup` first; capture only on a cache miss.
-- `chrome.tabs.captureVisibleTab` only captures what is on screen *now*, and Chrome allows about **2 calls per second**. Capture `t`, then seek back to `t−0.5s` and `t−1.0s` (wait for the `seeked` event), keeping captures ≥ 0.5s apart.
-- Hide YouTube's overlay controls during capture and restore them after. Restore `currentTime = t` and leave the video paused.
-- Crop to the video element's rect scaled by `devicePixelRatio`, using `OffscreenCanvas` in the service worker. Encode JPEG. Only crops leave the browser.
+- Frames are drawn from the `<video>` element onto a canvas in the content script, not taken with `captureVisibleTab`, so YouTube's overlays can't appear (Phase 1 design, section 3). Take `t`, then seek back to `t−0.5s` and `t−1.0s`, waiting for the `seeked` event before each draw.
+- Restore `currentTime = t` and leave the video paused.
+- Don't capture while an ad is playing (`ad-showing` on the player).
+- Long edge ≤ 1280 px, JPEG. Only these frames leave the browser.
 - Fetch the transcript in the browser from the page's caption track; never from the backend.
 
 ## Permissions
-`activeTab`, `sidePanel`, `scripting`, and host permission for `https://www.youtube.com/*`. Do not add `<all_urls>` without asking; it triggers a bigger install warning.
+`sidePanel`, `storage`, and host permission for `https://www.youtube.com/*`. Add others only when code needs them (`activeTab` was removed with `captureVisibleTab`). Do not add `<all_urls>` without asking; it triggers a bigger install warning.
 
 ## Code conventions
 - YouTube DOM selectors live in one module (`entrypoints/content/selectors.ts` or similar) so page changes are a one-file fix.

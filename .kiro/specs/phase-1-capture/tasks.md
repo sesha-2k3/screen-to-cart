@@ -54,15 +54,22 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
 - [x] 9. Checkpoint: automated checks
   - `uv run pytest -q`, `uv run ruff check .`, `uv run mypy app` in `backend/`; `pnpm compile`, `pnpm test` and `pnpm build` in `extension/`
 
-- [ ] 10. Final checkpoint: Phase 1 "Done when" (the user runs this)
+- [x] 10. Draw frames from the video element (replaces screenshots)
+  - The first Chrome check showed overlays in the crops and an ad captured in place of the video; see `design.md` section 3
+  - Stop the capture while an ad plays (`ad-showing` on the player)
+  - `lib/youtube/frame.ts`: draw the `<video>` onto a canvas, long edge ≤ 1280 px, JPEG 0.85; test the size cap
+  - Remove the overlay CSS, crop math, capture spacing and the `activeTab` permission
+  - _Requirements: 4_
+
+- [ ] 11. Final checkpoint: Phase 1 "Done when" (the user runs this)
   - Needs Chrome and real YouTube pages, so the agent gives the checklist and waits for results
-  - 10 regular videos and 10 Shorts, at least one without captions and one with paid promotion. For each one, record: hotkey OK, button OK, no controls in the crop, transcript shown or "No captions", video paused at `t`
+  - 10 regular videos and 10 Shorts, at least one without captions and one with paid promotion. For each one, record: hotkey OK, button OK, no YouTube controls or overlays in the frame, transcript shown or "No captions", video paused at `t`
   - On the paid-promotion video, the panel shows it as paid promotion (confirms the `paidContentOverlay` field from design section 1)
 
 ## Notes
 
 - Tests never call live services; frames in tests are generated with NumPy/OpenCV, not stored fixtures.
-- The extension uses Vitest (`pnpm test`, with WXT's `WxtVitest` plugin). Only pure functions get tests: video ID parsing (task 6), json3 parsing with the ±30 s slice (task 5) and crop math (task 7). Test files sit next to the code as `*.test.ts`.
+- The extension uses Vitest (`pnpm test`, with WXT's `WxtVitest` plugin). Only pure functions get tests: video ID parsing (task 6), json3 parsing with the ±30 s slice (task 5) and the frame size cap (task 10). Test files sit next to the code as `*.test.ts`.
 
 ## Task Dependency Graph
 
@@ -72,7 +79,8 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
     { "id": 0, "tasks": ["1", "2", "4"] },
     { "id": 1, "tasks": ["3", "5", "6"] },
     { "id": 2, "tasks": ["7"] },
-    { "id": 3, "tasks": ["8"] }
+    { "id": 3, "tasks": ["8"] },
+    { "id": 4, "tasks": ["10"] }
   ]
 }
 ```

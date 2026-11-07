@@ -21,7 +21,6 @@ Alternatives considered:
 
 The same MAIN-world script reads the player response (`movie_player.getPlayerResponse()`, or `#shorts-player` on Shorts) for the title, `shortDescription`, caption tracks and the paid-content overlay. This works on Shorts, where the description isn't in the DOM, and stays current after YouTube's in-page navigation. The paid-promo flag is read from `paidContentOverlay` in the player response. This was confirmed on a video showing the "Includes paid promotion" banner, and on several videos without it.
 
-If an ad is playing (the player has the `ad-showing` class), the capture stops and asks the user to wait, because the screenshot would show the ad instead of the video.
 
 The isolated content script and the MAIN-world script talk through `window` `CustomEvent`s (request/response with a request ID).
 
@@ -29,19 +28,24 @@ The isolated content script and the MAIN-world script talk through `window` `Cus
 
 | Step | Runs in | Why |
 |---|---|---|
-| Video ID, rect, pause/seek, hide/restore controls | Isolated content script | DOM access; selectors live in `lib/youtube/selectors.ts`, shared by both content scripts |
+| Video ID, pause/seek, draw frames, ad check | Isolated content script | DOM access; selectors live in `lib/youtube/selectors.ts`, shared by both content scripts |
 | Player data, transcript | MAIN-world content script | Needs page JS objects and the player's network calls |
-| `GET /lookup`, `captureVisibleTab`, crop | Background service worker | Only the background can capture; `OffscreenCanvas` works there |
+| Trigger, `GET /lookup`, orchestration | Background service worker | Receives the hotkey and opens the side panel |
 | `POST /identify` (SSE) | Side panel | `@microsoft/fetch-event-source` calls `window.setTimeout` and `document`, which don't exist in a service worker |
 
-The background writes the finished capture (3 crops + context) to `chrome.storage.session`. The side panel reads it on mount and watches `storage.onChanged`. When the hotkey opens a closed panel, the capture can finish before the panel has loaded, and this avoids that race. Three JPEG crops are well under the 10 MB `storage.session` quota.
+The background writes the finished capture (3 frames + context) to `chrome.storage.session`. The side panel reads it on mount and watches `storage.onChanged`. When the hotkey opens a closed panel, the capture can finish before the panel has loaded, and this avoids that race.
 
-## 3. Capture details
+## 3. Frames: draw the video element (deviation from the plan)
 
-- Before each capture, the content script seeks, waits for `seeked`, then waits two animation frames so the hidden controls and the new frame are painted.
-- Controls are hidden by toggling a class on `<html>` that enables an injected stylesheet. The hidden elements are the top and bottom chrome, the gradients, the caption window, the paid-promo overlay and the Shorts overlay. Restore always runs in a `finally` block.
-- Crop scale is `bitmap.width / window.innerWidth`, not `devicePixelRatio` alone, so that browser zoom is handled too. The rect is clamped to the viewport.
-- JPEG quality is 0.85.
+The plan captures frames with `chrome.tabs.captureVisibleTab` and crops them to the video in the service worker. That was built first, and in the task 10 check YouTube's overlays still showed up in the crops: the Shorts channel name, Subscribe button, title and progress bar, the info-card icon and channel watermarks. Hiding them by CSS selector meant chasing YouTube's markup.
+
+Instead, the content script draws the `<video>` element onto a canvas (`lib/youtube/frame.ts`). Overlays are separate elements, so they can't appear. YouTube plays through Media Source Extensions, so the canvas isn't tainted; a console test on a real video confirmed `toDataURL` works. This also removed the overlay CSS, the crop math, Chrome's 2-captures-per-second limit and the `activeTab` permission.
+
+- Seek to the target time, wait for `seeked` (2 s timeout), then draw. Restore `currentTime = t` and pause in a `finally` block.
+- Long edge capped at 1280 px, so three 4K frames stay well under the 10 MB `storage.session` quota. The vision model counts every image as the same number of tokens, so a larger frame doesn't help.
+- JPEG quality 0.85.
+- If `toDataURL` throws (protected content), the capture fails with "This video can’t be captured." No screenshot fallback until a real video needs it.
+- If an ad is playing (the player has the `ad-showing` class), the capture stops and asks the user to wait, because the frame would be the ad.
 
 ## 4. Backend API for Phase 1
 
@@ -50,13 +54,8 @@ The background writes the finished capture (3 crops + context) to `chrome.storag
 - A frame that won't decode returns 422.
 - `vision/frame_select.py` decodes each frame with OpenCV, converts it to grayscale and scores it by the variance of the Laplacian. It is decorated with `@observe(capture_input=False)` so base64 images don't go to Langfuse. That keeps them private and doesn't use up units.
 
-## 5. Permissions and the side panel button
+## 5. Permissions
 
-Add `activeTab`, `storage` and host permission `https://www.youtube.com/*`. `storage` isn't in the plan's table but `chrome.storage.session` needs it. `scripting` isn't added: content scripts are declared in the manifest, and YouTube tabs that were open before install just need a reload.
+`sidePanel`, `storage` and host permission `https://www.youtube.com/*`. `storage` isn't in the plan's table but `chrome.storage.session` needs it. `scripting` isn't added: content scripts are declared in the manifest, and YouTube tabs that were open before install just need a reload. `activeTab` was needed only for `captureVisibleTab` and was removed with it (section 3).
 
-Result of the task 1 test on macOS Chrome, regular videos and Shorts:
-- The hotkey captured every time.
-- The side panel button captured every time it was pressed, including after moving to another video or Short.
-- The panel once showed "Either the '<all_urls>' or 'activeTab' permission is required." for the button path, but not from a button press during the test. The cause isn't known. Host permission for `youtube.com` alone isn't enough for `captureVisibleTab`, so this error is what any capture without an `activeTab` grant would show.
-
-So the button stays as the normal trigger. If a capture fails, the panel tells the user to press the shortcut, reading its label from `commands.getAll()` (⌥⇧S on macOS, or whatever the user rebound it to). Task 10 checks the button again on 20 videos. `<all_urls>` is not added without asking (see the `extension` steering file).
+Task 1 tested `captureVisibleTab` from the hotkey and the button; both worked. The panel once showed an `activeTab` permission error from the button path that couldn't be reproduced. Drawing the video element doesn't need that permission, so the error can no longer happen.

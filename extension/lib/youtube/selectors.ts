@@ -6,20 +6,3 @@ export const VIDEO_SELECTOR = { watch: '#movie_player video', shorts: '#shorts-p
 
 // The player gets this class while an ad plays in place of the video.
 export const AD_SHOWING_SELECTOR = '#movie_player.ad-showing';
-
-// Hidden during capture so they don't end up in the crops.
-export const OVERLAY_SELECTORS = [
-  '.ytp-chrome-top',
-  '.ytp-chrome-bottom',
-  '.ytp-gradient-top',
-  '.ytp-gradient-bottom',
-  '.ytp-caption-window-container',
-  '.ytp-paid-content-overlay',
-  '.ytp-ce-element',
-  '.ytp-cards-teaser',
-  '.ytp-pause-overlay',
-  '.ytp-bezel',
-  '.ytp-spinner',
-  '.ytp-tooltip',
-  'ytd-reel-player-overlay-renderer',
-];

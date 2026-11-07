@@ -79,9 +79,9 @@ Pause video at time t (content script)
       ↓
 Quick cache check: GET /lookup?video_id&t ──hit──→ show cached result, done
       ↓ miss
-Capture (content script + service worker)
-  frames: t, t−0.5s, t−1.0s (seek back within the buffered video, captures ≥0.5s apart)
-  YouTube controls hidden during capture · crop to the video rect
+Capture (content script)
+  frames: t, t−0.5s, t−1.0s (seek back within the buffered video)
+  drawn from the <video> element, so no YouTube overlays · skipped while an ad plays
   + transcript ±30s · title · description · paid-promo label
       ↓
 POST /identify (frames + context) ── SSE stream opens back to the side panel
@@ -122,14 +122,13 @@ Latency targets: product name in **≤ 2s**, full listings in **≤ 6s** (cache 
 1. **Trigger.** The user presses the hotkey (registered with `chrome.commands`) or clicks "What's this?" in the side panel. Opening the side panel on its own does nothing; the button press is the trigger. The hotkey also opens the side panel if it's closed.
 2. **Freeze the moment.** The content script records the current time `t` and pauses the video, so the product stays on screen while the user waits and the capture is of exactly the moment they meant.
 3. **Cache check first.** The extension sends `video_id` + `t` to a cheap `GET /lookup`. On a hit (someone already asked about this 5-second window) the result comes back instantly, nothing is captured or uploaded, and no model quota is used.
-4. **Capture frames.** On a miss, the content script hides YouTube's overlay controls (progress bar, Shorts buttons) and the service worker calls `chrome.tabs.captureVisibleTab`. The extension then seeks back 0.5s and 1.0s (the video is already buffered there, so seeks are fast) and captures again. Two corrections to the earlier plan:
-   - A screenshot can only capture what's on screen *now*, so "t−1s" has to come from seeking back, not from the past.
-   - Chrome limits `captureVisibleTab` to about 2 calls per second, so captures must be at least 0.5s apart. Three frames take about 1 second.
-   After capture, the extension restores the controls and `currentTime = t`, and leaves the video paused.
-5. **Crop.** The service worker crops each screenshot to the video element's rectangle (scaled by `devicePixelRatio`) using `OffscreenCanvas`, and encodes it as JPEG. Only the crops leave the browser.
+4. **Capture frames.** On a miss, the content script draws the `<video>` element's current frame onto a canvas, then seeks back 0.5s and 1.0s (the video is already buffered there, so seeks are fast) and draws again after each `seeked` event. "t−1s" has to come from seeking back, because only the current frame can be drawn. YouTube's overlays (controls, Shorts buttons, watermarks) are separate elements, so they never appear in the frames. If an ad is playing, nothing is captured and the user is asked to wait. After capture, the extension restores `currentTime = t` and leaves the video paused.
+5. **Encode.** Each frame is scaled to a long edge of at most 1280 px and encoded as JPEG. Only these frames leave the browser.
+
+   An earlier version of this plan used `chrome.tabs.captureVisibleTab` screenshots cropped to the video. In Phase 1 testing, YouTube's overlays kept showing up in the crops, so it was replaced (see `.kiro/specs/phase-1-capture/design.md`, section 3).
 6. **Gather context.** The content script reads the transcript ±30s around `t` (fetched in the browser from the page's caption track), the title, the description, and whether the "Includes paid promotion" label is shown.
 7. **Send and stream.** The extension POSTs frames + context to `/identify`. The response is an SSE stream, so the side panel starts showing progress immediately.
-8. **Pick the frame.** The backend scores the three crops by Laplacian variance and keeps the sharpest. Only that one goes to the vision model (each image costs 2,048 tokens on Groq).
+8. **Pick the frame.** The backend scores the three frames by Laplacian variance and keeps the sharpest. Only that one goes to the vision model (each image costs 2,048 tokens on Groq).
 9. **Run the LangGraph pipeline.**
    - **Sponsorship check** starts in parallel right away, because it only needs the promo label, transcript and description, not the identified product.
    - **Tier 1** (vision) returns product candidates, visual notes and confidence.
@@ -144,12 +143,11 @@ Latency targets: product name in **≤ 2s**, full listings in **≤ 6s** (cache 
 
 | Permission | Why |
 |---|---|
-| `activeTab` | Lets `captureVisibleTab` screenshot the current tab when the user presses the hotkey or clicks the toolbar icon |
 | `sidePanel` | The results UI |
-| `scripting` | Inject the content script if needed |
-| host permission for `https://www.youtube.com/*` | Content script on YouTube pages |
+| `storage` | `chrome.storage.session` hands the capture from the service worker to the side panel |
+| host permission for `https://www.youtube.com/*` | Content scripts on YouTube pages |
 
-`activeTab` is only granted by certain user gestures (the hotkey, clicking the toolbar icon) and ends when the tab navigates. Test early whether a click on the side panel's "What's this?" button, after moving to a new video, still allows capture. If it doesn't, either have the button tell the user to use the hotkey, or request the broader `<all_urls>` permission, which shows a bigger install warning.
+Drawing frames from the video element needs no screenshot permission, so `activeTab` isn't requested. `scripting` isn't needed either: content scripts are declared in the manifest, and YouTube tabs open before install just need a reload.
 
 ---
 
@@ -159,8 +157,9 @@ Latency targets: product name in **≤ 2s**, full listings in **≤ 6s** (cache 
 screen-to-cart/
 ├── extension/                 # WXT + React + TS
 │   ├── entrypoints/
-│   │   ├── content.ts         # reads video, time, transcript, description, promo label
-│   │   ├── background.ts      # captureVisibleTab, hotkey, messaging
+│   │   ├── content/           # pause/seek, draws frames from the video element
+│   │   ├── player.content.ts  # MAIN world: player data, transcript, promo label
+│   │   ├── background.ts      # hotkey, /lookup, capture flow, messaging
 │   │   └── sidepanel/         # React app
 │   ├── lib/api.ts             # typed client (openapi-fetch + generated types)
 │   ├── lib/api-types.ts       # generated by openapi-typescript
@@ -438,13 +437,13 @@ There are no time estimates per phase. Coding speed isn't the limit; these are:
 3. Trigger and capture, following the request flow in section 3:
    - Hotkey via `chrome.commands` and the side panel's "What's this?" button.
    - Pause the video at `t`, call `GET /lookup` for a cache hit, and capture only on a miss.
-   - Hide YouTube's overlay controls, then capture frames at `t`, `t−0.5s` and `t−1.0s` by seeking back, at least 0.5s apart (Chrome's capture rate limit).
-   - Restore controls and `currentTime = t`; leave the video paused.
-   - Crop each frame to the video rect with `OffscreenCanvas`, accounting for `devicePixelRatio`, and encode as JPEG.
+   - Draw frames from the `<video>` element at `t`, `t−0.5s` and `t−1.0s` by seeking back; skip capture while an ad plays.
+   - Restore `currentTime = t`; leave the video paused.
+   - Scale each frame to a long edge of at most 1280 px and encode as JPEG.
 4. Backend `frame_select.py`: pick the sharpest of the three frames by Laplacian variance.
-5. Side panel shows the chosen crop, transcript snippet, and description raw.
+5. Side panel shows the chosen frame, transcript snippet, and description raw.
 
-**Done when:** it works on 10 regular videos and 10 Shorts, including one with no captions; no YouTube controls appear in the crops; and capture works from both the hotkey and the side panel button (see the permissions note in section 3).
+**Done when:** it works on 10 regular videos and 10 Shorts, including one with no captions; no YouTube controls or overlays appear in the frames; and capture works from both the hotkey and the side panel button.
 
 ### Phase 2 — Identify
 
@@ -471,7 +470,7 @@ There are no time estimates per phase. Coding speed isn't the limit; these are:
 ### Phase 4 — Resolve and verify
 
 1. Dedupe: group by GTIN/UPC/MPN; fall back to `rapidfuzz` title similarity + same brand.
-2. SigLIP rerank: embed the video crop and each listing's image; store listing embeddings in pgvector so repeat products are free. Blend image score + text-match score.
+2. SigLIP rerank: embed the chosen video frame and each listing's image; store listing embeddings in pgvector so repeat products are free. Blend image score + text-match score.
 3. Price breakdown: item + shipping + estimated sales tax by state (labeled as an estimate). Filter accessories ("case for", "compatible with").
 4. `check_quality` node: rule-based first (top image score, brand present in title); call `gpt-oss-20b` only when rules are unsure.
 5. `refine` node on `gpt-oss-20b`, capped by an `attempts` counter (max 2). Clear `listings` before re-retrieval.
@@ -543,4 +542,4 @@ Keep prompts provider-agnostic (plain JSON schema in the prompt + Pydantic valid
 | Wrong exact model (lookalikes) | Transcript + description evidence, SigLIP rerank, "why this match" shown to user |
 | Retailer API quota or downtime | 24h query cache; each adapter fails independently |
 | Langfuse free-tier units run out | ~10–15 units per pipeline run fits well within 50k/month at Groq's free-tier volume; if you outgrow it, self-host Langfuse (free, MIT) or move to a paid plan |
-| Privacy concerns | Send only the cropped video frame; don't store frames by default; say so in the listing |
+| Privacy concerns | Send only frames of the video itself, never a screenshot of the page; don't store frames by default; say so in the listing |
