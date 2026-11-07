@@ -1,5 +1,7 @@
 # Implementation Plan: Phase 1 Capture
 
+## Overview
+
 Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` for the decisions. Each task stays under about 200 lines of new code.
 
 ## Tasks
@@ -61,3 +63,16 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
 
 - Tests never call live services; frames in tests are generated with NumPy/OpenCV, not stored fixtures.
 - The extension uses Vitest (`pnpm test`, with WXT's `WxtVitest` plugin). Only pure functions get tests: video ID parsing (task 6), json3 parsing with the ±30 s slice (task 5) and crop math (task 7). Test files sit next to the code as `*.test.ts`.
+
+## Task Dependency Graph
+
+```json
+{
+  "waves": [
+    { "id": 0, "tasks": ["1", "2", "4"] },
+    { "id": 1, "tasks": ["3", "5", "6"] },
+    { "id": 2, "tasks": ["7"] },
+    { "id": 3, "tasks": ["8"] }
+  ]
+}
+```
