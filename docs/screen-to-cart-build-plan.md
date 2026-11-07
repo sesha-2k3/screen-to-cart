@@ -385,6 +385,7 @@ GROQ_API_KEY=
 IDENTIFY_VISION_MODEL=groq:qwen/qwen3.8-27b
 DISAMBIGUATE_MODEL=groq:openai/gpt-oss-120b
 REFINE_MODEL=groq:openai/gpt-oss-20b
+SPONSORSHIP_MODEL=groq:openai/gpt-oss-20b
 LLM_MODE=live            # live | record | replay
 
 # Later: ANTHROPIC_API_KEY=
@@ -512,11 +513,13 @@ Because every node gets its model from `get_llm(role)`, the switch is one instal
 IDENTIFY_VISION_MODEL=groq:qwen/qwen3.8-27b
 DISAMBIGUATE_MODEL=groq:openai/gpt-oss-120b
 REFINE_MODEL=groq:openai/gpt-oss-20b
+SPONSORSHIP_MODEL=groq:openai/gpt-oss-20b
 
 # paid
 IDENTIFY_VISION_MODEL=anthropic:claude-haiku-5-5
 DISAMBIGUATE_MODEL=anthropic:claude-sonnet-5-5
 REFINE_MODEL=anthropic:claude-haiku-5-5
+SPONSORSHIP_MODEL=anthropic:claude-haiku-5-5
 ```
 
 When you switch:
