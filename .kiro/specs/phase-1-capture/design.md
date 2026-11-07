@@ -19,7 +19,7 @@ Alternatives considered:
 - Scraping the "Show transcript" panel: Shorts don't show it, and it means clicking through the page UI.
 - Fetching on the backend with yt-dlp: breaks the "transcript is fetched in the browser" rule, and YouTube blocks datacenter IPs.
 
-The same MAIN-world script reads the player response (`movie_player.getPlayerResponse()`, or `#shorts-player` on Shorts) for the title, `shortDescription`, caption tracks and the paid-content overlay. This works on Shorts, where the description isn't in the DOM, and stays current after YouTube's in-page navigation. Task 3 confirms the exact paid-promo field on a real sponsored video.
+The same MAIN-world script reads the player response (`movie_player.getPlayerResponse()`, or `#shorts-player` on Shorts) for the title, `shortDescription`, caption tracks and the paid-content overlay. This works on Shorts, where the description isn't in the DOM, and stays current after YouTube's in-page navigation. Task 4 confirms the exact paid-promo field on a real sponsored video.
 
 The isolated content script and the MAIN-world script talk through `window` `CustomEvent`s (request/response with a request ID).
 
@@ -53,8 +53,8 @@ The background writes the finished capture (3 crops + context) to `chrome.storag
 Add `activeTab`, `storage` and host permission `https://www.youtube.com/*`. `storage` isn't in the plan's table but `chrome.storage.session` needs it. `scripting` isn't added: content scripts are declared in the manifest, and YouTube tabs that were open before install just need a reload.
 
 Result of the task 1 test on macOS Chrome, regular videos and Shorts:
-- The hotkey always captures.
-- A click on the side panel button does not grant `activeTab`. The first click in a tab failed with "Either the '<all_urls>' or 'activeTab' permission is required." Host permission for `youtube.com` alone isn't enough for `captureVisibleTab`.
-- After the hotkey has been used in the tab, the button captures, including after moving to another video or Short. YouTube changes videos without reloading the page, so the `activeTab` grant stays. A full page reload ends it.
+- The hotkey captured every time.
+- The side panel button captured every time it was pressed, including after moving to another video or Short.
+- The panel once showed "Either the '<all_urls>' or 'activeTab' permission is required." for the button path, but not from a button press during the test. The cause isn't known. Host permission for `youtube.com` alone isn't enough for `captureVisibleTab`, so this error is what any capture without an `activeTab` grant would show.
 
-So the button stays. When a capture fails, the panel tells the user to press the shortcut, reading its label from `commands.getAll()` (⌥⇧S on macOS, or whatever the user rebound it to). `<all_urls>` is not added without asking (see the `extension` steering file).
+So the button stays as the normal trigger. If a capture fails, the panel tells the user to press the shortcut, reading its label from `commands.getAll()` (⌥⇧S on macOS, or whatever the user rebound it to). Task 10 checks the button again on 20 videos. `<all_urls>` is not added without asking (see the `extension` steering file).
