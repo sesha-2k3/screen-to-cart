@@ -35,7 +35,7 @@ Build plan Phase 1 steps 1–5. See `requirements.md` for scope and `design.md` 
   - Parse json3 `events` into `{start, duration, text}` and keep segments within ±30 s of `t`
   - _Requirements: 5_
 
-- [ ] 6. Isolated content script
+- [x] 6. Isolated content script
   - Every YouTube selector in `lib/youtube/selectors.ts`; `entrypoints/content/index.ts`
   - Video ID from `/watch?v=` and `/shorts/<id>`; video element rect; message handlers for pause, seek-and-wait (`seeked` + 2 animation frames), hide/restore overlays, get context (via the bridge)
   - _Requirements: 2, 4, 5_
