@@ -1,0 +1,34 @@
+name: screen-to-cart
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: screen_to_cart
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d screen_to_cart"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  backend:
+    build: ./backend
+    env_file:
+      - .env
+    environment:
+      # Overrides the localhost URL from .env; inside the network the DB host is "db".
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/screen_to_cart
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
