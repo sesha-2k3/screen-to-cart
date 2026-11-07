@@ -209,7 +209,7 @@ Rules that apply to every task:
     - Optional `WXT_BACKEND_URL` in `extension/.env`, only if the backend isn't on `http://localhost:8000`
   - _Requirements: 4.7, 4.8_
 
-- [ ] 12. Final checkpoint: Phase 0 "Done when" (the user runs these)
+- [x] 12. Final checkpoint: Phase 0 "Done when" (the user runs these)
   - These need the user's `.env` and Chrome, so the agent gives the commands and waits for the results.
   - `docker compose up --build`, then `curl localhost:8000/health` returns `{"status":"ok"}` (Req 3.5, 14.1)
   - `docker compose exec db psql -U postgres -d screen_to_cart -c "select extname from pg_extension"` lists `vector` (Req 7.4)
