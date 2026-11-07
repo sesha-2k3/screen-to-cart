@@ -72,6 +72,8 @@ class Settings(BaseSettings):
     sponsorship_model: str | None = None
     llm_mode: LlmMode = "live"
     tier2_confidence_threshold: float = 0.7
+    # Tier 2 also runs when the runner-up is within this much of the top guess.
+    tier2_margin: float = 0.3
     # Groq free-plan tokens per minute; check console.groq.com/settings/limits.
     groq_tpm_limit: int = 8000
     save_eval_captures: bool = False

@@ -1,5 +1,5 @@
 from app.schemas import ProductCandidate
-from eval.metrics import is_match, top1_correct
+from eval.metrics import is_match, top1_correct, top3_correct
 
 
 def candidate(brand: str, model: str) -> ProductCandidate:
@@ -44,3 +44,8 @@ def test_top1_correct_uses_only_the_first_candidate() -> None:
     candidates = [candidate("Sony", "WH-1000XM4"), candidate("Sony", "WH-1000XM5")]
     assert not top1_correct("Sony", "WH-1000XM5", candidates)
     assert not top1_correct("Sony", "WH-1000XM5", [])
+
+
+def test_top3_correct_finds_the_product_among_the_chips() -> None:
+    candidates = [candidate("Sony", "WH-1000XM4"), candidate("Sony", "WH-1000XM5")]
+    assert top3_correct("Sony", "WH-1000XM5", candidates)

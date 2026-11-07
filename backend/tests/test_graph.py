@@ -4,6 +4,7 @@ import pytest
 from langchain_core.messages import BaseMessage
 
 from app.graph.build import needs_tier2
+from app.graph.confidence import rank
 from app.graph.nodes import disambiguate as disambiguate_module
 from app.graph.nodes import identify as identify_module
 from app.graph.nodes.disambiguate import disambiguate
@@ -87,14 +88,29 @@ async def test_disambiguate_sends_no_image_and_returns_tier2_candidates(
     assert update == {"candidates": fake.result.candidates, "tier": 2}
 
 
-def test_needs_tier2_skips_a_single_confident_candidate() -> None:
-    assert not needs_tier2([candidate("WH-1000XM5", 0.9)], threshold=0.7)
+def test_needs_tier2_skips_a_clear_winner_seen_in_the_frame() -> None:
+    candidates = [candidate("WH-1000XM5", 0.75), candidate("WH-1000XM4", 0.2)]
+    assert not needs_tier2(candidates, threshold=0.7, margin=0.3)
 
 
 def test_needs_tier2_runs_on_low_confidence() -> None:
-    assert needs_tier2([candidate("WH-1000XM5", 0.6)], threshold=0.7)
+    assert needs_tier2([candidate("WH-1000XM5", 0.6)], threshold=0.7, margin=0.3)
 
 
-def test_needs_tier2_runs_on_several_candidates() -> None:
-    candidates = [candidate("WH-1000XM5", 0.9), candidate("WH-1000XM4", 0.8)]
-    assert needs_tier2(candidates, threshold=0.7)
+def test_needs_tier2_runs_on_a_close_runner_up() -> None:
+    candidates = [candidate("WH-1000XM5", 0.5), candidate("WH-1000XM4", 0.4)]
+    assert needs_tier2(candidates, threshold=0.3, margin=0.3)
+
+
+def test_needs_tier2_runs_when_the_top_guess_has_no_visual_evidence() -> None:
+    text_only = candidate("WH-1000XM5", 0.9).model_copy(
+        update={"evidence": [Evidence(source="transcript", detail="mine are the XM5")]}
+    )
+    assert needs_tier2([text_only], threshold=0.7, margin=0.3)
+
+
+def test_rank_sorts_and_scales_confidences_to_at_most_one() -> None:
+    ranked = rank([candidate("WH-1000XM4", 0.9), candidate("WH-1000XM5", 0.95)])
+    assert [c.model for c in ranked] == ["WH-1000XM5", "WH-1000XM4"]
+    assert sum(c.confidence for c in ranked) == pytest.approx(1)
+    assert ranked[0].confidence == pytest.approx(0.95 / 1.85)

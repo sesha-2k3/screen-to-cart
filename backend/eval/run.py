@@ -6,6 +6,7 @@ Runs in LLM_MODE=record, so items whose responses are already stored cost no tok
 
 import argparse
 import asyncio
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -23,7 +24,7 @@ from app.llm.invoke import FixtureMissingError, LlmOutputError
 from app.llm.rate_limit import RateLimited
 from app.schemas import IdentifyRequest, ProductCandidate
 from eval.labels import capture_path, read_labels
-from eval.metrics import top1_correct
+from eval.metrics import top1_correct, top3_correct
 
 DEV_SUBSET_SIZE = 50
 MAX_ATTEMPTS = 3
@@ -100,40 +101,54 @@ def runnable_labels(subset: str) -> tuple[list[dict[str, Any]], int, int]:
 def report(results: list[ItemResult], unlabeled: int, missing: int) -> str:
     settings = get_settings()
     n = len(results)
-    tier1 = sum(
-        top1_correct(r.label["brand"], r.label["model"], r.tier1) for r in results
-    )
-    final = sum(
-        top1_correct(r.label["brand"], r.label["model"], r.final) for r in results
-    )
+
+    def count(score: Callable[..., bool], tier1_only: bool) -> int:
+        return sum(
+            score(
+                r.label["brand"], r.label["model"], r.tier1 if tier1_only else r.final
+            )
+            for r in results
+        )
+
     tier2_calls = sum(r.called_tier2 for r in results)
     errors = sum(bool(r.error) for r in results)
 
     def share(count: int) -> str:
         return f"{count}/{n} ({count / n:.0%})" if n else "0/0"
 
+    tier1_row = (
+        f"| Tier 1 only | {share(count(top1_correct, True))} "
+        f"| {share(count(top3_correct, True))} |"
+    )
+    tier2_row = (
+        f"| Tier 1+2 | {share(count(top1_correct, False))} "
+        f"| {share(count(top3_correct, False))} |"
+    )
     lines = [
         f"# Identify eval, {date.today().isoformat()}",
         "",
         f"- Prompt version: `{PROMPT_VERSION}`",
         f"- Tier 1 model: `{settings.model_spec_for(Role.IDENTIFY_VISION)}`",
         f"- Tier 2 model: `{settings.model_spec_for(Role.DISAMBIGUATE)}`",
-        f"- Tier 2 threshold: {settings.tier2_confidence_threshold}",
+        (
+            f"- Tier 2 rule: top confidence < {settings.tier2_confidence_threshold}, "
+            f"runner-up within {settings.tier2_margin}, or no visual evidence"
+        ),
         (
             f"- Items run: {n} (skipped: {unlabeled} unlabeled, "
             f"{missing} without a capture; {errors} errors, counted as wrong)"
         ),
         "",
-        "| Config | Top-1 correct |",
-        "|---|---|",
-        f"| Tier 1 only | {share(tier1)} |",
-        f"| Tier 1+2 | {share(final)} |",
+        "| Config | Top-1 correct | Top-3 correct |",
+        "|---|---|---|",
+        tier1_row,
+        tier2_row,
         "",
         f"Tier 2 called: {share(tier2_calls)}",
         "",
         "## Items",
         "",
-        "| Video | t | Label | Tier 1 top | Final top | Tier 2 | Error |",
+        "| Video | t | Label | Tier 1 guesses | Final guesses | Tier 2 | Error |",
         "|---|---|---|---|---|---|---|",
     ]
     for r in results:
@@ -146,7 +161,11 @@ def report(results: list[ItemResult], unlabeled: int, missing: int) -> str:
 
 
 def _top(candidates: list[ProductCandidate]) -> str:
-    return f"{candidates[0].brand} {candidates[0].model}" if candidates else "none"
+    if not candidates:
+        return "none"
+    return "<br>".join(
+        f"{c.brand} {c.model} ({c.confidence:.0%})" for c in candidates[:3]
+    )
 
 
 async def main(subset: str) -> None:
@@ -160,7 +179,7 @@ async def main(subset: str) -> None:
         print(f"[{index}/{len(labels)}] {label['video_id']} @ {label['timestamp']}")
         results.append(await run_with_retries(label))
     REPORTS_DIR.mkdir(exist_ok=True)
-    path = REPORTS_DIR / f"{date.today().isoformat()}-identify.md"
+    path = REPORTS_DIR / f"{date.today().isoformat()}-{PROMPT_VERSION}.md"
     path.write_text(report(results, unlabeled, missing))
     print(f"Report: {path}")
 

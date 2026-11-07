@@ -8,7 +8,7 @@ from langchain_core.messages import BaseMessage, HumanMessage
 
 from app.schemas import Candidates, TranscriptSegment
 
-PROMPT_VERSION = "identify-v1"
+PROMPT_VERSION = "identify-v2"
 DESCRIPTION_LIMIT = 1500
 
 # A word with both letters and digits, like WH-1000XM5 or RTX4090.
@@ -29,18 +29,30 @@ _SHAPE = """\
 
 _TIER1 = """\
 You identify the exact product a viewer is asking about in a frame from a YouTube \
-video. It is usually the main item in focus. Use the frame and the video's title, \
-description and transcript around this moment to name the exact brand and model.
+video. It is usually the main item in focus.
+
+Work in this order:
+1. Look at the frame first. Write visual_notes for the main item: product type, \
+shape, colors, materials, and any brand text or logos you can read. Another model \
+will rely on these notes without seeing the image.
+2. Then read the title, description and transcript to find the exact brand and model.
+3. Use a name from the text only if it fits what the frame shows. Videos often \
+mention or link several products; a name that is mentioned is not evidence that it \
+is the item in this frame. If the frame shows a square watch, a round watch named \
+in the transcript is wrong.
+4. If the frame shows no brand and the text names none that fits, use "Generic" as \
+the brand and the product type as the model.
 
 Rules:
-- Return up to 3 candidates, best first. List more than one only if you are unsure \
-which product it is, or several products are equally prominent.
-- confidence is your probability that the brand AND exact model are right.
-- evidence cites what supports each candidate: text or logos in the frame (visual), \
-a short quote (transcript) or a line from the description (description).
+- Return 3 candidates when you can: the best guess first, then the most likely \
+alternatives for the same item (other models or brands that look like it). Return \
+fewer only if there are no plausible alternatives.
+- confidence is your probability that the brand AND exact model are right. The \
+confidences of all candidates must add up to 1 or less, so split it honestly.
+- evidence cites what supports each candidate: what is visible in the frame \
+(visual), a short quote (transcript) or a line from the description (description). \
+Include a visual item whenever the frame supports the candidate.
 - search_queries: 1 to 3 store search queries, most specific first.
-- visual_notes: describe brand text, logos, colors, shape and materials in detail. \
-Another model will rely on these notes without seeing the image.
 - If no product is visible, return {"candidates": []}.
 
 Reply with JSON only, in this shape:
@@ -48,13 +60,15 @@ Reply with JSON only, in this shape:
 
 _TIER2 = """\
 A vision model looked at a frame from a YouTube video and proposed the candidates \
-below, but it is unsure. Using its visual notes and the video's text, decide the \
-exact brand and model the viewer is asking about.
+below, but it is unsure. Decide the exact brand and model the viewer is asking about.
 
 Rules:
-- Prefer names that appear in the description or transcript and fit the visual notes.
-- Return the candidates best first, in the same shape. Return one if you are confident.
-- confidence is your probability that the brand AND exact model are right.
+- Treat the visual notes as the truth about what is in the frame. Use the \
+description and transcript to pin down the exact model, but reject any name that \
+contradicts the visual notes, even if the video mentions it.
+- Return the candidates best first, in the same shape, up to 3.
+- confidence is your probability that the brand AND exact model are right. The \
+confidences of all candidates must add up to 1 or less.
 - Keep or improve the evidence, search_queries and visual_notes.
 
 Reply with JSON only, in this shape:

@@ -2,6 +2,7 @@ from typing import Any
 
 from langchain_core.runnables import RunnableConfig
 
+from app.graph.confidence import rank
 from app.graph.prompts import PROMPT_VERSION, tier2_messages
 from app.graph.state import PipelineState
 from app.llm.factory import Role
@@ -18,4 +19,4 @@ async def disambiguate(state: PipelineState, config: RunnableConfig) -> dict[str
     result = await invoke_json(
         Role.DISAMBIGUATE, messages, Candidates, PROMPT_VERSION, config
     )
-    return {"candidates": result.candidates, "tier": 2}
+    return {"candidates": rank(result.candidates), "tier": 2}

@@ -60,6 +60,11 @@ Build plan Phase 2 steps 1–5 and 7. See `requirements.md` for scope and `desig
   - Test: scoring on a few matching and non-matching pairs
   - _Requirements: 10.1, 10.2_
 
+- [x] 13. identify-v2: image-first prompt and alternatives
+  - Prompt v2, `graph/confidence.py` (sort, scale to ≤ 1), Tier 2 margin and visual-evidence rule, `TIER2_MARGIN` setting, top-3 in the eval report
+  - Tests: margin, visual-evidence and confidence-scaling cases; top-3 scoring
+  - _Requirements: 2.1, 3.1, 3.2, 10.2_
+
 - [ ] 11. Live check in Chrome (the user runs this)
   - Set `LLM_MODE=record`, `SAVE_EVAL_CAPTURES=true` and a real `GROQ_API_KEY`; capture a few videos and confirm candidates appear, a second trigger in the same 5 s window is a cache hit, and a trace shows Tier 1 (and Tier 2 when it runs) in Langfuse
   - _Requirements: 2.1, 3.1, 7.2, 8.3_

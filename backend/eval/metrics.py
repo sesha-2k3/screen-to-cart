@@ -33,3 +33,8 @@ def is_match(brand: str, model: str, candidate: ProductCandidate) -> bool:
 
 def top1_correct(brand: str, model: str, candidates: list[ProductCandidate]) -> bool:
     return bool(candidates) and is_match(brand, model, candidates[0])
+
+
+def top3_correct(brand: str, model: str, candidates: list[ProductCandidate]) -> bool:
+    """The right product is among the guesses the side panel shows (top + 2 chips)."""
+    return any(is_match(brand, model, c) for c in candidates[:3])

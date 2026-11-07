@@ -10,15 +10,27 @@ from app.graph.state import PipelineState
 from app.schemas import ProductCandidate
 
 
-def needs_tier2(candidates: list[ProductCandidate], threshold: float) -> bool:
+def needs_tier2(
+    candidates: list[ProductCandidate], threshold: float, margin: float
+) -> bool:
+    """Unsure, a close runner-up, or a top guess the frame doesn't support."""
     if not candidates:
         return False
-    return len(candidates) > 1 or candidates[0].confidence < threshold
+    top = candidates[0]
+    if top.confidence < threshold:
+        return True
+    if len(candidates) > 1 and top.confidence - candidates[1].confidence < margin:
+        return True
+    # A name taken only from the text is the most common v1 mistake.
+    return not any(item.source == "visual" for item in top.evidence)
 
 
 def _after_identify(state: PipelineState) -> Literal["disambiguate", "done"]:
-    threshold = get_settings().tier2_confidence_threshold
-    if needs_tier2(state.get("candidates", []), threshold):
+    settings = get_settings()
+    candidates = state.get("candidates", [])
+    if needs_tier2(
+        candidates, settings.tier2_confidence_threshold, settings.tier2_margin
+    ):
         return "disambiguate"
     return "done"
 

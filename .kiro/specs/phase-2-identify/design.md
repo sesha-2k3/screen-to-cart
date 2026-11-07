@@ -64,7 +64,7 @@ JSON mode is turned on in the Groq builder in `factory.py` (`response_format={"t
 
 ### Prompts
 
-`PROMPT_VERSION = "identify-v1"` lives in `prompts.py` and changes whenever a prompt changes. Plan step 6 (Langfuse prompt management) is skipped: it adds a network call per request, and the record/replay key already ties results to the exact prompt text.
+`PROMPT_VERSION` (now `identify-v2`) lives in `prompts.py` and changes whenever a prompt changes. Plan step 6 (Langfuse prompt management) is skipped: it adds a network call per request, and the record/replay key already ties results to the exact prompt text.
 
 - Tier 1: system instructions plus a user message with the image (`data:image/jpeg;base64,…`), title, trimmed description and transcript. It asks for up to 3 candidates sorted by confidence, each with evidence and 1–3 search queries.
 - Tier 2: text only. Tier 1's candidates (including `visual_notes`) plus the same text context. It returns the same `Candidates` shape, best first.
@@ -72,7 +72,22 @@ JSON mode is turned on in the Groq builder in `factory.py` (`response_format={"t
 
 ### Tier 2 rule
 
-`needs_tier2(state)` is true when the top candidate's confidence is below `TIER2_CONFIDENCE_THRESHOLD` (default 0.7) or there is more than one candidate. With no candidates it is false and the stream ends with an empty `candidates` event. Phase 6 tunes the threshold.
+`needs_tier2` is true when any of these holds. With no candidates it is false and the stream ends with an empty `candidates` event. Phase 6 tunes both numbers.
+
+- The top candidate's confidence is below `TIER2_CONFIDENCE_THRESHOLD` (default 0.7).
+- The runner-up is within `TIER2_MARGIN` (default 0.3) of the top candidate.
+- The top candidate has no `visual` evidence.
+
+This departs from the plan's "several candidates" trigger. `identify-v2` always asks for up to 3 candidates so the side panel can show alternatives, and "more than one" would then run Tier 2 on every request.
+
+### identify-v2 (after the first 7 labels)
+
+On `identify-v1`, Tier 1 got 3 of 7 right, every guess said 95%, and Tier 2 never ran (`eval/reports/2026-11-07-identify-v1.md`). Three of the four misses took a name from the transcript or description that the frame contradicts (Garmin for an Apple Watch, a Berluti card holder for slippers, the sponsor's WD-40 for a gasket). `identify-v2` changes:
+
+- The prompt is image-first: write `visual_notes` from the frame, then use a name from the text only if it fits the frame. A mentioned product is not evidence that it is the one in the frame. Unbranded items get brand "Generic".
+- Up to 3 candidates for the same item, with confidences adding up to at most 1. `graph/confidence.py` sorts them and scales confidences down when the model ignores that.
+- The Tier 2 rule above, including the visual-evidence check.
+- The eval reports top-3 accuracy (the right product is among the top guess and the two chips), and report files are named by prompt version.
 
 ### Identify cache
 
@@ -115,7 +130,7 @@ Scoring (`eval/metrics.py`): normalize by lowercasing and removing everything ex
 
 `PipelineState` (TypedDict): `video_id`, `frame` (base64), `title`, `description`, `transcript`, `candidates`, `tier`.
 
-New settings: `TIER2_CONFIDENCE_THRESHOLD` (default 0.7), `GROQ_TPM_LIMIT` (default 8000), `SAVE_EVAL_CAPTURES` (default false).
+New settings: `TIER2_CONFIDENCE_THRESHOLD` (default 0.7), `TIER2_MARGIN` (default 0.3), `GROQ_TPM_LIMIT` (default 8000), `SAVE_EVAL_CAPTURES` (default false).
 
 ## Correctness Properties
 

@@ -15,7 +15,7 @@ Out of scope: retailer search (Phase 3), the sponsorship check (Phase 5), the fu
 - **Candidate**: A `ProductCandidate`, one guess at the product (brand, model and supporting evidence).
 - **Tier_1**: The identify node, which calls the `identify_vision` model with one image.
 - **Tier_2**: The disambiguate node, which calls the `disambiguate` model with text only.
-- **Tier_2_Rule**: Tier_1's top confidence is below `TIER2_CONFIDENCE_THRESHOLD`, or Tier_1 returned more than one Candidate.
+- **Tier_2_Rule**: Tier_1's top confidence is below `TIER2_CONFIDENCE_THRESHOLD`, the runner-up is within `TIER2_MARGIN` of the top Candidate, or the top Candidate has no `visual` evidence (design, Tier 2 rule; changed in `identify-v2`).
 - **Rate_Limiter**: The per-model token bucket in `backend/app/llm/`.
 - **Fixture**: A stored LLM response in `fixtures/llm/`, used by `LLM_MODE=record` and `replay`.
 - **Identify_Cache**: The Postgres table of final Candidates keyed by `video_id` and 5-second bucket (`floor(t / 5)`).
